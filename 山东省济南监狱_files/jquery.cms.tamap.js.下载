@@ -1,0 +1,225 @@
+jQuery.gettamap={
+		setList :function (lng,lat,size,type,div,mapdiv,textarea){
+			var map = new BMap.Map(mapdiv);
+			 var poi = map.centerAndZoom(new BMap.Point(lng,lat), size);
+			  map.enableDragging();//启用地图拖拽事件，默认启用(可不写)
+			  map.enableScrollWheelZoom();//启用地图滚轮放大缩小
+			  map.enableDoubleClickZoom();//启用鼠标双击放大，默认启用(可不写)
+			  map.enableKeyboard();//启用键盘上下左右键移动地图
+			  //向地图中添加缩放控件
+			  var ctrl_nav = new BMap.NavigationControl({anchor:BMAP_ANCHOR_TOP_RIGHT,type:BMAP_NAVIGATION_CONTROL_LARGE});
+			  map.addControl(ctrl_nav);
+			  //向地图中添加缩略图控件
+			  var ctrl_ove = new BMap.OverviewMapControl({anchor:BMAP_ANCHOR_BOTTOM_RIGHT,isOpen:1});
+			  map.addControl(ctrl_ove);
+			  //向地图中添加比例尺控件
+			  var ctrl_sca = new BMap.ScaleControl({anchor:BMAP_ANCHOR_BOTTOM_LEFT});
+			  map.addControl(ctrl_sca);
+			// 百度地图API功能
+			  var mapurl = embedRootPath+"/pwptomap/getData.do";
+			  $.ajax({
+			  	  url:mapurl,
+			  	  data:{'type':type},
+			  	  type:"post",
+			  	  success : function(data){
+			  		  if(data != null){
+			  			  list = data;
+			  			  $("#"+div).setTemplateElement(textarea,null,{filter_data:false});
+			  			  $("#"+div).processTemplate(data);
+			  			  for(var j=0; j<list.length;j++){
+			  			  	var marker=list[j];
+			  			  	var address = marker.addr;
+			  			  	if(marker.lng!=""&&marker.lat!=""){
+			  			  	addMarker(j,div,map);
+			  			  	} else {
+			  			  		getPoint(j);
+			  			  	}
+			  			  }
+		  		          }
+		  			  }
+		  		});
+			 
+		},settype :function(div,textarea){
+			var mapurl = embedRootPath+"/pwptomap/getDictionary.do";
+			 $.ajax({
+			  	  url:mapurl,
+			  	  type:"post",
+			  	  success : function(data){
+			  		  if(data != null){
+			  			  $("#"+div).setTemplateElement(textarea,null,{filter_data:false});
+			  			  $("#"+div).processTemplate(data);
+		  		          }
+		  			  }
+		  		});
+		}	
+}
+ function setlistmap(div,mapdiv,type,size){
+	  var mapurl = embedRootPath+"/pwptomap/getData.do";
+	  $.ajax({
+	  	  url:mapurl,
+	  	  data:{'type':type},
+	  	  type:"post",
+	  	  success : function(data){
+	  		list = data;
+	  		if(data != null){
+	  			  $("#"+div).setTemplateElement("textarea_"+div,null,{filter_data:false});
+	  			  $("#"+div).processTemplate(data);
+		          }
+	  		  if(data[0] != undefined){
+	  			var map = new BMap.Map(mapdiv);
+		  		 map.enableDragging();//启用地图拖拽事件，默认启用(可不写)
+	 			  map.enableScrollWheelZoom();//启用地图滚轮放大缩小
+	 			  map.enableDoubleClickZoom();//启用鼠标双击放大，默认启用(可不写)
+	 			  map.enableKeyboard();//启用键盘上下左右键移动地图
+	 			  //向地图中添加缩放控件
+	 			  var ctrl_nav = new BMap.NavigationControl({anchor:BMAP_ANCHOR_TOP_RIGHT,type:BMAP_NAVIGATION_CONTROL_LARGE});
+	 			  map.addControl(ctrl_nav);
+	 			  //向地图中添加缩略图控件
+	 			  var ctrl_ove = new BMap.OverviewMapControl({anchor:BMAP_ANCHOR_BOTTOM_RIGHT,isOpen:1});
+	 			  map.addControl(ctrl_ove);
+	 			  //向地图中添加比例尺控件
+	 			  var ctrl_sca = new BMap.ScaleControl({anchor:BMAP_ANCHOR_BOTTOM_LEFT});
+	 			  map.addControl(ctrl_sca);
+	 			// 百度地图API功能
+	  			 var poi = map.centerAndZoom(new BMap.Point(data[0].lng,data[0].lat), size);
+	  			 $("#"+div).setTemplateElement("textarea_"+div,null,{filter_data:false});
+	  			  $("#"+div).processTemplate(data);
+	  		  }else{
+	  			var map = new BMap.Map(mapdiv);
+		  		 map.enableDragging();//启用地图拖拽事件，默认启用(可不写)
+	 			  map.enableScrollWheelZoom();//启用地图滚轮放大缩小
+	 			  map.enableDoubleClickZoom();//启用鼠标双击放大，默认启用(可不写)
+	 			  map.enableKeyboard();//启用键盘上下左右键移动地图
+	 			  //向地图中添加缩放控件
+	 			  var ctrl_nav = new BMap.NavigationControl({anchor:BMAP_ANCHOR_TOP_RIGHT,type:BMAP_NAVIGATION_CONTROL_LARGE});
+	 			  map.addControl(ctrl_nav);
+	 			  //向地图中添加缩略图控件
+	 			  var ctrl_ove = new BMap.OverviewMapControl({anchor:BMAP_ANCHOR_BOTTOM_RIGHT,isOpen:1});
+	 			  map.addControl(ctrl_ove);
+	 			  //向地图中添加比例尺控件
+	 			  var ctrl_sca = new BMap.ScaleControl({anchor:BMAP_ANCHOR_BOTTOM_LEFT});
+	 			  map.addControl(ctrl_sca);
+	 			// 百度地图API功能
+	  			 var poi = map.centerAndZoom(new BMap.Point("116","36.7"), 7);
+	  			 $("#"+div).setTemplateElement("textarea_"+div,null,{filter_data:false});
+	  			  $("#"+div).processTemplate(data);
+	  		  }
+	  		for(var j=0; j<list.length;j++){
+  			  	var marker=list[j];
+  			  	var address = marker.addr;
+  			  	if(marker.lng!=""&&marker.lat!=""){
+  			  	addMarker(j,div,map);
+  			  	} else {
+  			  		getPoint(j);
+  			  	}
+  			  }
+  			  }
+  		});
+	 
+}
+function addMarker(i,div,map){
+    var address = list[i].addr;
+    var phone = list[i].phone;
+    var pic = list[i].pic;
+    var servicetime = list[i].servicetime;
+    if($.trim(phone) == '') {
+    	phone = '';
+    } else {
+    	phone = '<br />电话：' + phone ;
+    }
+    if($.trim(servicetime) == '') {
+    	servicetime = '';
+    } else {
+    	servicetime = '<br />服务时间：' + servicetime;
+    }
+ 	var pic = '<img src="'+pic+'" alt="" style="width:323px;height:101px;" />';
+	var addr = '<div style="text-align:left;line-height:20px;padding-top:5px;">地址：' + address + phone + servicetime + '</div>';
+	var content = '<div style="text-align:center;padding:5px 10px 5px 10px;color:#4d4d4d;font-family:\"宋体\";font-size:12px;">' + pic + addr + '</div>';
+	//创建检索信息窗口对象
+	var searchInfoWindow = null;
+	searchInfoWindow = new BMapLib.SearchInfoWindow(map, content, {
+			title  : list[i].title,      //标题
+			width  : 345,             //宽度
+			height : 190,              //高度
+			panel  : "maplist_cont",         //检索结果面板
+			enableAutoPan : true,     //自动平移
+			enableSendToPhone: true, //是否启用发送到手机
+			searchTypes   :[
+				BMAPLIB_TAB_TO_HERE,  //到这里去
+				BMAPLIB_TAB_FROM_HERE, //从这里出发
+				BMAPLIB_TAB_SEARCH   //周边检索
+			]
+		}); 
+	var poi = new BMap.Point(list[i].lng,list[i].lat);//定义一个中心点坐标	
+	var marker = new BMap.Marker(poi); //创建marker对象
+	map.addOverlay(marker); //在地图中添加marker
+	marker.addEventListener("click", function(e){
+		searchInfoWindow.open(marker);
+	});
+}
+function changemap(lng,lat,addr,phone,pic,title,servicetime,div,mapdiv,type){
+	 var map = new BMap.Map(mapdiv);
+	 var poi = map.centerAndZoom(new BMap.Point(lng,lat), 11);
+	 map.enableDragging();//启用地图拖拽事件，默认启用(可不写)
+	 map.enableScrollWheelZoom();//启用地图滚轮放大缩小
+	 map.enableKeyboard();//启用键盘上下左右键移动地图
+	 //向地图中添加缩放控件
+	 var ctrl_nav = new BMap.NavigationControl({anchor:BMAP_ANCHOR_TOP_RIGHT,type:BMAP_NAVIGATION_CONTROL_LARGE});
+	 map.addControl(ctrl_nav);
+	 //向地图中添加缩略图控件
+	 var ctrl_ove = new BMap.OverviewMapControl({anchor:BMAP_ANCHOR_BOTTOM_RIGHT,isOpen:1});
+	 map.addControl(ctrl_ove);
+	 //向地图中添加比例尺控件
+	 var ctrl_sca = new BMap.ScaleControl({anchor:BMAP_ANCHOR_BOTTOM_LEFT});
+	 map.addControl(ctrl_sca);
+	    var address = addr;
+	    var phone = phone;
+	    var pic = pic;
+	    var servicetime = servicetime;
+	    if($.trim(phone) == '') {
+	    	phone = '';
+	    } else {
+	    	phone = '<br />电话：' + phone ;
+	    }
+	    if($.trim(servicetime) == '') {
+	    	servicetime = '';
+	    } else {
+	    	servicetime = '<br />服务时间：' + servicetime;
+	    }
+	 	var pic = '<img src="'+pic+'" alt="" style="width:323px;height:101px;" />';
+		var addr = '<div style="text-align:left;line-height:20px;padding-top:5px;">地址：' + address + phone + servicetime + '</div>';
+		var content = '<div style="text-align:center;padding:5px 10px 5px 10px;color:#4d4d4d;font-family:\"宋体\";font-size:12px;">' + pic + addr + '</div>';
+		//创建检索信息窗口对象
+		var searchInfoWindow = null;
+		searchInfoWindow = new BMapLib.SearchInfoWindow(map, content, {
+				title  : title,      //标题
+				width  : 345,             //宽度
+				height : 190,              //高度
+				panel  : div,         //检索结果面板
+				enableAutoPan : true,     //自动平移
+				enableSendToPhone: true, //是否启用发送到手机
+				searchTypes   :[
+					BMAPLIB_TAB_TO_HERE,  //到这里去
+					BMAPLIB_TAB_FROM_HERE, //从这里出发
+					BMAPLIB_TAB_SEARCH   //周边检索
+				]
+			}); 
+	 var poma =  new BMap.Point(lng,lat);
+	    var marker = new BMap.Marker(poma); //创建marker对象
+	    map.addOverlay(marker); //在地图中添加marker
+	    marker.addEventListener("click", function(e){
+		    searchInfoWindow.open(marker);
+		    var mapurl = embedRootPath+"/pwptomap/getData.do";
+			  $.ajax({
+			  	  url:mapurl,
+			  	  data:{'type':type},
+			  	  type:"post",
+			  	  success : function(data){
+			  		  if(data != null){
+			  			  $("#"+div).setTemplateElement("textarea_"+div,null,{filter_data:false});
+			  			  $("#"+div).processTemplate(data);
+		  		          }
+		  			  }
+		  		});
+	    })
+}

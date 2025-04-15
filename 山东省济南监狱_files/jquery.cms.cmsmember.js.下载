@@ -1,0 +1,183 @@
+﻿/**
+ * wangbf
+ */
+jQuery.cmsmember={
+		defaultValue:{
+			'InterFrontPath' : (memberPath  == undefined || memberPath  == '')?'/gentleCMS':memberPath 
+		},
+		//取用户基本信息
+		getUserInfo:function(sd,st,ed,et){
+			$.get(
+					$.cmsmember.defaultValue.InterFrontPath+"/usergroupfront/getUserInfo.shtml",
+					function(data){
+						if(data.success){
+							$("#"+sd).setTemplateElement(st);
+							$("#"+sd).processTemplate(data.result);
+						}else{
+							$("#"+ed).setTemplateElement(et);
+							$("#"+ed).processTemplate(data.result);
+						}
+					}
+			);
+		},
+		//更新用户信息
+		updateUserInfo:function(formId,sd,st,ed,et){
+			  if (!$("#"+formId).validationEngine("validate"))
+				{
+					return false;
+				} 
+			$.ajax({
+				url:$.cmsmember.defaultValue.InterFrontPath+"/usergroupfront/updateUserInfo.shtml",
+				data:$('#'+formId).serialize(),
+				cache:false,
+				async:false,
+				type:"post",
+				dataType:"json",
+				success:function(data){
+					if(data.success){
+						alert("修改成功!!");
+					}else{
+						alert("修改失败!!");
+					}
+				},error:function(a,b,c){
+					alert(a);
+				}
+			});
+		},
+		userLogin:function(formId,spaceUrl){
+			$.ajax({
+				url:$.cmsmember.defaultValue.InterFrontPath+"/memberclient/login.shtml",
+				data:$('#'+formId).serialize(),
+				cache:false,
+				async:false,
+				type:"post",
+				dataType:"json",
+				success:function(data){
+					if(data.flag){
+						window.location.href = spaceUrl;
+					}else{
+						alert(data.msg);
+					}
+				},error:function(a,b,c){
+					alert(a);
+				}
+			});
+		},
+		userLogout:function(toUrl){
+			$.get($.cmsmember.defaultValue.InterFrontPath+"/usergroupfront/userLogout.shtml",function(data){
+				if(data.success){
+					alert(data.result);
+					window.location.href = toUrl;
+				}else{
+					alert(data.result);
+				}
+			});
+		},//验证码
+		getImg : function(n, validateClass) {
+			var strTmp = '';
+			var urlTmp = $.cmsmember.defaultValue.InterFrontPath + "/usergroupfront/getValidateCode.shtml?rnd=" + Math.random();
+			strTmp += "<table><tr><td><input type=\"text\" id=\""
+					+ n.attr("fieldname")
+					+ "\" name=\""
+					+ n.attr("fieldname")
+					+ "\"  "
+					+ validateClass
+					+ "  /></td><td><img id=\""
+					+ n.attr("fieldname")
+					+ "Img\" name=\""
+					+ n.fieldname
+					+ "Img\" src=\""
+					+ urlTmp
+					+ "\"/></td><td> <a href=\"javascript:void(0);\" onclick=\"javascript:$.cmsmember.getValidateCode('"
+					+n.attr("fieldname")
+					+ "Img');\">&nbsp;看不清，换一张</a></td></tr></table>";
+			return strTmp;
+		}
+		,getValidateCode:function (validateCodeImg)
+		   {		 
+				var url=$.cmsmember.defaultValue.InterFrontPath+"/usergroupfront/getValidateCode.shtml?rnd="+Math.random();
+				$("#"+validateCodeImg).attr("src",url);
+				//document.getElementById(validateCodeImg).src=url;
+		   },
+		//用户注册
+		userRegister:function(formId,spaceUrl){
+                 if (!$("#"+formId).validationEngine("validate"))
+				{
+					return false;
+				} 
+                                
+			$.ajax({
+				url:$.cmsmember.defaultValue.InterFrontPath+"/usergroupfront/userRegister.shtml",
+				data:$('#'+formId).serialize(),
+				cache:false,
+				async:false,
+				type:"post",
+				dataType:"json",
+				success:function(data){
+					if(data.success){
+						//data.result=刚刚注册的用户对象，属性名小写。
+						alert("注册成功！请登录");
+						window.location.href = spaceUrl;
+					}else{
+						alert(data.result.message);
+					}
+				},error:function(a,b,c){
+					alert(a);
+				}
+			});
+		},
+		//用户短消息
+		getUserSms:function(){
+			
+		},
+		//其他扩展：用户的问询，投票等。。。
+		getUserQuestions:function(){
+			
+		},
+		//读xml根据siteid查询permid再比对用户的permid
+		getPermidBySiteid:function(siteid,st,sd,et,ed){
+			$.ajax({
+				url:$.cmsmember.defaultValue.InterFrontPath+"/usergroupfront/getPermidBySiteid.shtml",
+				data:"siteid="+siteid,
+				cache:false,
+				async:false,
+				type:"post",
+				dataType:"json",
+				success:function(data){
+					if(data.success){
+						$("#"+sd).setTemplateElement(st);
+						$("#"+sd).processTemplate(data.result);
+					}else{
+						alert(data.result);
+						$("#"+ed).setTemplateElement(et);
+						$("#"+ed).processTemplate(data.result);
+					}
+				},error:function(a,b,c){
+					alert(a);
+				}
+			});
+		}
+		,userHasLogin:function(nickName){
+			$.ajax({
+				url:$.cmsmember.defaultValue.InterFrontPath+"/usergroupfront/isMemberLogin.shtml",
+				data:{},
+				cache:false,
+				async:false,
+				type:"post",
+				dataType:"json",
+				success:function(data){
+					if(data.success){
+						$("#"+nickName).val(data.result.nickName);
+						return ;
+					}else{						
+						$("#"+nickName).val('');
+						alert("请先登录!!");
+						return ;
+					}
+				},error:function(a,b,c){
+					alert(a);
+				}
+			});
+		}
+		
+}

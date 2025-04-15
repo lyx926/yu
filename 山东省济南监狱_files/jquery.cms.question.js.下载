@@ -1,0 +1,77 @@
+//gentleCMS authread JS
+//author boj
+//ajax check authority to read index of channel or article 
+var embedQuestionUrl = embedRootPath+"/embedservice/question.shtml";
+jQuery.question={
+		statQuestion:function (questionid,siteid,div,textarea){
+	    //get vote simple in vote detail page
+			var params="method=stat&siteId="+siteid+"&id="+questionid;
+		var url =embedQuestionUrl;
+		$.ajax({
+			url:url,
+			data:params,
+			cache:false,
+			type:"post",
+			dataType:"json",
+			success:function(data) {
+				if(typeof(data.success) == undefined){
+					$("#"+div).attr("innerHTML",data);
+					return;
+					}
+				if (data.success){
+					var charttype = data.result.question.charttype;
+					var chartwidth = data.result.question.chartwidth;
+					var chartheight = data.result.question.chartheight;
+					var reslist = data.result.result;
+					if(charttype=='Column2D'){
+						//2D柱状图
+						bardata(questionid,charttype,chartwidth,chartheight,reslist);
+					}else if(charttype=='Pie2D'){
+						//2D饼图
+						piedata(questionid,charttype,chartwidth,chartheight,reslist);
+					}
+				}
+			   },
+			error:function(errdata,request, settings){
+				$("#"+div).append("<div>request error!</div>"+errdata);
+				}
+		});
+   },questionSubmit:function (formid,div,textarea){
+	    //get vote simple in vote detail page
+		if (!$("#"+formid).validationEngine("validate"))
+		{
+			return false;
+		}  
+		var	params=$("#"+formid).serialize();
+		params += "&method=submit";
+		var url = embedQuestionUrl;
+		$.ajax({
+			url:url,
+			data:params,
+			cache:false,
+			type:"post",
+			dataType:"json",
+			success:function(data) {
+				if(typeof(data.success) == undefined){
+					$("#"+div).attr("innerHTML",data);return;
+					}
+				if (data.success){
+	           
+					$("#"+div).setTemplateElement(textarea,null,{filter_data:false});
+				    $("#"+div).processTemplate(data.result);
+					}
+				else{
+					 $("#"+div).setTemplateElement(textarea);
+					 $("#"+div).processTemplate(data.result);
+					 }
+			   },
+			error:function(errdata,request, settings){
+				$("#"+div).append("<div>request error!</div>"+errdata);
+				}
+		});
+	},questionRenderXml:function (data,id,charttype,questionid,chartwidth,chartheight){ 
+		myChart = new FusionCharts("/template/system/fusioncharts/"+charttype+".swf", 'chart'+questionid+id, chartwidth, chartheight, "0", "0");
+		myChart.setDataXML(data);
+		myChart.render('div_result_'+questionid+id);
+	}
+}

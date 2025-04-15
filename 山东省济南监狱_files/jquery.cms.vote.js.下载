@@ -1,0 +1,86 @@
+//gentleCMS authread JS
+//author boj
+//ajax check authority to read index of channel or article 
+var embedVoteUrl =  embedRootPath+"/embedservice/vote.shtml";
+jQuery.vote={
+		showVote:function (voteid,siteid,div,textarea){
+	    //get vote simple in vote detail page
+	   	var params="method=index&id="+voteid+"&siteId="+siteid;
+		var url =embedVoteUrl;
+		$.ajax({
+			url:url,
+			data:params,
+			cache:false,
+			type:"post",
+			dataType:"json",
+			success:function(data) {
+				if(typeof(data.success) == undefined){
+					$("#"+div).attr("innerHTML",data);return;
+					}
+				if (data.success){
+					var starttime = data.result.start;
+					var endtime = data.result.end;
+					var charttype = data.result.vote.charttype;
+					var chartwidth = data.result.vote.chartwidth;
+					var chartheight = data.result.vote.chartheight;
+					var title = data.result.vote.title;
+					var reslist = data.result.voteDetail;
+					$('#div_result_'+voteid).css({"width":chartwidth+"px","height":chartheight+"px"}); 
+					var myChart = echarts.init(document.getElementById('div_result_'+voteid));
+					if(charttype=='Column2D'){
+						//2D柱状图
+						bardata(myChart,reslist,title,starttime,endtime);
+					}else if(charttype=='Pie2D'){
+						//2D饼图
+						piedata(myChart,reslist,title,starttime,endtime);
+					}
+				}
+			   },
+			error:function(errdata,request, settings){
+				$("#"+div).append("<div>request error!</div>"+errdata);
+				}
+		});
+   },voteSubmit:function (formid,div,textarea){
+	    //get vote simple in vote detail page
+		if (!$("#"+formid).validationEngine("validate"))
+		{
+			return false;
+		}  
+		var	params=$("#"+formid).serialize();
+		params += "&method=submit";
+		var url = embedVoteUrl;
+		$.ajax({
+			url:url,
+			data:params,
+			cache:false,
+			type:"post",
+			dataType:"json",
+			success:function(data) {
+				if(typeof(data.success) == undefined){
+					$("#"+div).attr("innerHTML",data);return;
+					}
+				if (data.success){
+	           
+					$("#"+div).setTemplateElement(textarea,null,{filter_data:false});
+				    $("#"+div).processTemplate(data.result);
+					}
+				else{
+					 $("#"+div).setTemplateElement(textarea);
+					 $("#"+div).processTemplate(data.result);
+					 }
+			   },
+			error:function(errdata,request, settings){
+				$("#"+div).append("<div>request error!</div>"+errdata);
+				}
+		});
+	},showVoteResult:function (voteid,siteid,div,textarea,div_result1,div_result2){ 
+		$.vote.showVote(voteid,siteid,div,textarea);
+		  $("#"+div_result1).show();
+		  $("#"+div_result2).show();
+		
+	},voteRenderXml:function (data,charttype,voteid,chartwidth,chartheight){ 
+		myChart = new FusionCharts("/template/system/fusioncharts/"+charttype+".swf", 'chart'+voteid, chartwidth, chartheight, "0", "0");
+		myChart.setDataXML(data);
+		myChart.render('div_result_'+voteid);
+	}
+}

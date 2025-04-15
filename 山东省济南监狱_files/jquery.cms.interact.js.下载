@@ -1,0 +1,179 @@
+﻿jQuery.interact={
+//得到验证码
+
+	//var listBlockcode="contentList";
+	//var detailBlockcode="detail";
+	//var submmitFormBlockCode="submmitForm";
+	
+	
+	getValidateCode:function (validateCodeImg){
+		var url=embedRootPath  +"/f_exchange/getValidateCode.shtml?rnd="+Math.random();
+		$("#"+validateCodeImg).attr("src",url);
+   },
+   
+   submmitform:function (isok){
+   
+		var functionid = $("#functionid").val()
+   	   if (!$("#form").validationEngine("validate"))
+		{
+			return false;
+		} 
+		if(!isok){
+			alert("附件已经提交，请等待。。。");
+			return false;
+		}
+			
+			var param = $("#form").serialize()
+			isok=false;
+			$.ajaxFileUpload(
+				{
+					url:embedRootPath +"/interform/saveForm.do?"+param,
+					secureuri:false,
+					oldFormId:'form',//fileElementId:'fileToUpload',
+					dataType: 'json',
+				
+					cache:false,
+					async:false,
+					success: function (data, status)
+					{
+						if(typeof(data.success) == 'undefined')
+						{
+							alert("信息提交失败");
+							return;
+						}
+						if (data.success)
+						{
+							//alert("上传附件成功！");
+							isok=true;					
+							var message='流水号:'+data.result.operatid+'<br>'+'查询密码:'+data.result.password+'<br>'
+							
+							$("#div_form_"+functionid).html(message)
+							
+							
+						}else{
+							alert(data.result);
+						}
+						
+					},
+					error: function (errdata, status, e)
+					{
+						alert("操作失败！");
+					}
+				}
+			)
+	},
+	
+	getContentList:function(functionid,curpage,pagesize,listBlockcode,showLevel,paramForm){
+		
+		if(!showLevel){
+			showLevel='daiban'
+		}
+		
+		if(curpage==undefined||curpage==null){
+			curpage = 1;
+		}
+			
+		//$.post(embedRootPath  +"/interajax/getData.do?,
+		//function(data){
+		//$("#div_list_"+functionid).html(data.result);
+		//});
+		var url=embedRootPath  +"/interajax/getData.do?functionid="+functionid+"&blockcode="+listBlockcode+"&method=getContentList&curpage="+curpage+"&pagesize="+pagesize+"&showLevel="+showLevel
+		var param = $("#"+paramForm).serialize();
+		$.ajax({
+			type:"post",
+			url:url,
+			data:param,
+			success:function(data){
+				$("#div_list_"+functionid).html(data.result);
+			}
+		})
+		
+	},
+	 
+	getContentById:function (functionid,id,detailBlockcode){
+		var url=embedRootPath  +"/interajax/getData.do?functionid="+functionid+"&blockcode="+detailBlockcode+"&method=getDetailById&contentid="+id+""
+		$.post(url,function(data){
+			$("#div_detail_"+functionid).html(data.result);
+		});
+	},
+
+	getByPassword:function (functionid,operatid,operatpassword,detailBlockcode){
+		var url=embedRootPath  +"/interajax/getData.do?functionid="+functionid+"&blockcode="+detailBlockcode+"&method=getDetailByPassword&operatid="+operatid+"&operatpassword="+operatpassword+""
+		$.post(url,function(data){
+		$("#div_detail_"+functionid).html(data.result);
+		});
+	},
+	 
+	getSubmmitForm:function (functionid,submmitFormBlockCode){
+		var url=embedRootPath  +"/interajax/getData.do?functionid="+functionid+"&blockcode="+submmitFormBlockCode+"&method=getSubmmitForm"
+		$.post(url,function(data){
+			$("#div_form_"+functionid).html(data.result);
+		});
+	},
+	addEvaluation :function(evaluationform,evaldiv,pointdiv){
+		var param = $("#"+evaluationform).serialize();
+		var point = $("#point").val()
+		
+		var url=embedRootPath +"/interform/addEvalCheck.do";
+		$.ajax({
+			type:"post",
+			url:url,
+			data:param,
+			success:function(data){
+				if(data.result.success){
+					alert(data.result.message)
+					$("#"+evaldiv).empty();
+					$("#"+pointdiv).empty()
+					$("#"+pointdiv).raty({
+					path:"/template/system/jquery/raty/img",
+						start:point,
+						readOnly:true
+					})
+				}else{
+					alert(data.result.message)
+				}			
+			},
+			error:function(){
+				
+			}			
+		})
+	},
+	getDepart:function(departDiv,functionid){
+		var url=embedRootPath  +"/interajax/getData.do"
+		$.ajax({
+			type:"post",
+			url:url,
+			data:{"functionid":functionid,"blockcode":"none","method":"getDepart"},
+			dataType: "json",
+			success:function(data){
+				for(var p in data){
+					$("#"+departDiv).append("<option value="+data[p].id+">"+data[p].text+"</option>");
+				}
+			}
+		})
+
+	},
+	getType:function(typeDiv,functionid){
+		var url=embedRootPath  +"/interajax/getData.do"
+		$.ajax({
+			type:"post",
+			url:url,
+			data:{"functionid":functionid,"blockcode":"none","method":"getType"},
+			dataType: "json",
+			success:function(data){
+				for(var p in data){
+					$("#"+typeDiv).append("<option value="+data[p].code+">"+data[p].dictdataValue+"</option>");
+				}
+
+				//data.forEach(
+					//function(value){
+						//$("<option></option>").attr({"value":value.code,"text":value.dictdataValue}).appendTo("#"+typeDiv)
+					//}
+				//)
+			}
+		})
+
+	}
+	
+}
+

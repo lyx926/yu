@@ -1,0 +1,63 @@
+//gentleCMS authread JS
+//author boj
+//ajax check authority to read index of channel or article 
+jQuery.gip={
+		sumitapplyinfo:function(formid,div,textarea){
+	    //get vote simple in vote detail page
+		if (!$("#"+formid).validationEngine("validate"))
+		{
+			return false;
+		}  
+		
+		var applygovid=$("input[name='applygovid']:checked").val();
+		if(applygovid==null||applygovid==""||applygovid==undefined){
+			alert("请选择所需信息的机关单位");
+			return;
+		}
+		var	params=$("#"+formid).serialize();
+		var url = "/gentleCMS/gipapplyfront/frontapplyinfo.do";
+		$.ajax({
+			url:url,
+			data:params,
+			cache:false,
+			type:"post",
+			dataType:"json",
+			success:function(data) {
+				if(typeof(data.success) == undefined){
+					$("#"+div).attr("innerHTML",data);return;
+					}
+				if (data.success){
+					$("#"+div).setTemplateElement(textarea,null,{filter_data:false});
+				    $("#"+div).processTemplate(data.result);
+					}
+				else{
+					 $("#"+div).html(data.result);
+					 }
+			   },
+			error:function(errdata,request, settings){
+				$("#"+div).append("<div>request error!</div>"+errdata);
+				}
+		});
+	},searchresult:function(snumber,spassword,div,textarea){
+		var	params="snumber="+snumber+"&spassword="+spassword;
+		var url = "/gentleCMS/gipapplyfront/frontsearchResult.do";
+		$.ajax({
+			url:url,
+			data:params,
+			cache:false,
+			type:"post",
+			dataType:"json",
+			success:function(data) {
+				if (data.success){
+						$("#"+div).setTemplateElement(textarea,null,{filter_data:false});
+					    $("#"+div).processTemplate(data.result);
+					}else{
+					 $("#"+div).html(data.result.message);
+				   }
+			   },
+			error:function(errdata,request, settings){
+				$("#"+div).append("<div>request error!</div>"+errdata);
+				}
+		});
+	}
+}

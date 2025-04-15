@@ -1,0 +1,1397 @@
+﻿jQuery.cmsexchange={
+    DefValue:{
+    	 ReplyFinish:'REPLY_FINISH',
+    	 ReplyNo:'REPLY_NO',
+    	 ReplyDo:'REPLY_DO',
+    	 AuditYes:'AUDITFLAG_YES',
+    	 AuditNot:'AUDITFLAG_NOT'
+	},
+	getFormItem:function (siteid,functionid,successResult,errorTemplate,errorResult,tableId){
+		 if (tableId==undefined)
+		 {
+		 	tableId=functionid+"_Item";
+		 }
+	var params="siteid="+siteid+"&functionid="+functionid;
+	$.ajax({
+		url:exchangePath+"/f_exchange/getFormItem.shtml",
+		data:params,
+		cache:false,
+		async:false,
+		type:"post",
+		dataType:"json",
+		success:function(data) {
+
+			try
+			{
+				if(typeof(data.success) == 'undefined')
+				{
+					$("#"+errorResult).attr("innerHTML",data);
+					return;
+				}
+				if (data.success)
+				{
+					  var strTmp="";
+					  var newLineBegin=true;
+					  var newLineEnd=false;
+					  var nowCol=1;
+					  strTmp+="<input type=\"hidden\" id=\"siteid\" name=\"siteid\" value=\""+siteid+"\"/>\n";
+  				      strTmp+="<input type=\"hidden\" id=\"functionid\" name=\"functionid\" value=\""+functionid+"\"/>\n";
+					  $.each(data.result, function(i, n){
+						  if (n.inputtype=="hidden")
+						  {			
+							  if (n.defaultvalue!="")
+							  {
+								  strTmp+="<input type=\"hidden\" id=\""+n.fieldname+"\" name=\""+n.fieldname+"\" value=\""+n.defaultvalue+"\"/>\n";
+							  }else
+							  {
+								  strTmp+="<input type=\"hidden\" id=\""+n.fieldname+"\" name=\""+n.fieldname+"\"/>\n";
+							  }
+							   
+						  }
+					  });
+					   strTmp+="<table id=\""+tableId+"\" width=\"100%\" >";
+					  $.each(data.result, function(i, n){
+						  var validateClass="";
+						  var strRequired="";
+						  if (!n.blankflag)
+						  {
+							  
+							if(n.validatescript!=undefined&&n.validatescript!=""){
+								n.validatescript="required,"+n.validatescript;
+							}else{
+								n.validatescript="required";
+							}
+ 						
+ 							strRequired="<font color=\"red\">*</font>";
+						   }
+						  if (n.validatescript!=undefined&&n.validatescript!="")
+						  {						  	
+								validateClass=" class=\"validate["+n.validatescript+"]\" ";	
+								//alert(validateClass);
+						   }
+						   if (n.editflag!=undefined&&n.editflag==false)
+						  {
+								validateClass+=" readonly=\"true\" ";	
+						   }
+						   if (n.minlength!=undefined&&n.minlength!="")
+						  {
+								validateClass+=" minlength=\""+n.minlength+"\" ";	
+						   }
+						   if (n.maxlength!=undefined&&n.maxlength!="")
+						  {
+								//validateClass+=" maxlength=\""+n.maxlength+"\" ";	
+						   }
+						   if (n.style!=undefined&&n.style!="")
+						  {
+								validateClass+=" style=\""+n.style+"\" ";	
+						   }
+						   
+						  							
+						  if (n.inputtype!="hidden")
+						  {
+								  if (n.doubleflag==true)
+								  {
+									  newLineBegin=true;
+									  newLineEnd=true;
+									  nowCol=2;
+									  strTmp+="<tr><td align=\"right\">"+strRequired+n.fieldtitle+":</td><td colspan=\"3\">";
+								  }else if (nowCol==2)
+								  {
+									  newLineBegin=true;
+									  newLineEnd=false;
+									  strTmp+="<td align=\"right\">"+strRequired+n.fieldtitle+":</td><td>";
+								  }else {
+									 strTmp+="<tr><td align=\"right\">"+strRequired+n.fieldtitle+":</td><td>";
+									 newLineEnd=false;
+								  }
+								  
+								  strTmp += FieldFactory.getHtml(n.inputtype,n,validateClass);
+								
+								  strTmp+="</td>"; 	
+								  nowCol++;
+								  if (nowCol>2)
+								  {
+									  nowCol=1;
+								  }
+								  if (newLineEnd)
+								  {
+									  strTmp+="</tr>";
+								  }
+						 }
+					  });
+					  strTmp+="</table>";	
+					//  alert(strTmp);
+					 $("#"+successResult).attr("innerHTML",strTmp);
+					 //$('#content').wysiwyg();
+				  	 //$("input.cmsdate").jSelectDate({css:"cmsdate",yearBeign: 1995,disabled : false,showLabel : false});
+					 //$(this).jSelectDate;
+				}else
+				{
+					  $("#"+errorResult).setTemplateElement(errorTemplate);
+					  $("#"+errorResult).processTemplate(data.result);
+				}
+			}
+			catch (e)
+			{
+				$("#"+errorResult).attr("innerHTML",e.message);
+			}
+		
+		},
+		error:function(errdata,request, settings){
+			$("#"+errorResult).append("<div>Error 404-Not Found Requesting Page</div>"+errdata);
+		}
+	})
+   }
+   ,
+   getReplyForm:function(siteid,functionid,contentid,successTemplate,successResult,errorTemplate,errorResult){
+       		 var params="siteid="+siteid+"&functionid="+functionid+"&contentid="+contentid;
+       		 $.ajax({
+			url:exchangePath+"/f_exchange/getRelpyForm.shtml",
+			data:params,
+			cache:false,
+			type:"post",
+			dataType:"json",
+			success:function(data) {
+				if(typeof(data.success) == 'undefined')
+				{
+					$("#"+errorResult).attr("innerHTML",data);
+					return;
+				}
+				if (data.success)
+				{
+				    $("#"+successResult).setTemplateElement(successTemplate,null,{filter_data:false});
+				    $("#"+successResult).processTemplate(data.result);
+				}else{
+				    $("#"+errorResult).setTemplateElement(errorTemplate);
+				    $("#"+errorResult).processTemplate(data.result);
+				}
+			},
+			error:function(errdata,request, settings){
+				$("#"+errorResult).append("<div>Error 404-Not Found Requesting Page</div>"+errdata);
+			}
+		});
+       		 
+   }
+   ,//获得互动的评价统计
+   getStatFun:function(siteid,functionid,successTemplate,successResult,errorTemplate,errorResult){
+ 		 var params="siteid="+siteid+"&functionid="+functionid;
+ 		 $.ajax({
+		url:exchangePath+"/f_exchange/getStatistics.do",
+		data:params,
+		cache:false,
+		type:"post",
+		dataType:"json",
+		success:function(data) {
+			if(typeof(data.success) == 'undefined')
+			{
+				$("#"+errorResult).attr("innerHTML",data);
+				return;
+			}
+			if (data.success)
+			{
+			    $("#"+successResult).setTemplateElement(successTemplate,null,{filter_data:false});
+			    $("#"+successResult).processTemplate(data.result);
+			}else{
+			    $("#"+errorResult).setTemplateElement(errorTemplate);
+			    $("#"+errorResult).processTemplate(data.result);
+			}
+		},
+		error:function(errdata,request, settings){
+			$("#"+errorResult).append("<div>Error 404-Not Found Requesting Page</div>"+errdata);
+		}
+	});
+ 		 
+}
+,//获得总结过评价统计
+getStatTotal:function(siteid,successTemplate,successResult,errorTemplate,errorResult){
+	 var params="siteid="+siteid;
+	 $.ajax({
+	url:exchangePath+"/f_exchange/getStatistics.do",
+	data:params,
+	cache:false,
+	type:"post",
+	dataType:"json",
+	success:function(data) {
+		if(typeof(data.success) == 'undefined')
+		{
+			$("#"+errorResult).attr("innerHTML",data);
+			return;
+		}
+		if (data.success)
+		{
+		    $("#"+successResult).setTemplateElement(successTemplate,null,{filter_data:false});
+		    $("#"+successResult).processTemplate(data.result);
+		}else{
+		    $("#"+errorResult).setTemplateElement(errorTemplate);
+		    $("#"+errorResult).processTemplate(data.result);
+		}
+	},
+	error:function(errdata,request, settings){
+		$("#"+errorResult).append("<div>Error 404-Not Found Requesting Page</div>"+errdata);
+	}
+});
+	 
+}
+,
+   saveFormItem:function (formid,successTemplate,successResult,errorTemplate,errorResult)
+   {
+	   
+	   if (!$("#"+formid).validationEngine("validate"))
+		{
+			return false;
+		} 
+		var	params=$("#"+formid).serialize();
+		$.ajax({
+			url:exchangePath+"/f_exchange/saveFormItem.shtml",
+			data:params,
+			cache:false,
+			type:"post",
+			dataType:"json",
+			success:function(data) {
+				if(typeof(data.success) == 'undefined')
+				{
+					$("#"+errorResult).attr("innerHTML",data);
+					return;
+				}
+				if (data.success)
+				{
+				    $("#"+successResult).setTemplateElement(successTemplate);
+				    $("#"+successResult).processTemplate(data.result);
+				}else{
+				    $("#"+errorResult).setTemplateElement(errorTemplate);
+				    $("#"+errorResult).processTemplate(data.result);
+				}
+			},
+			error:function(errdata,request, settings){
+				$("#"+errorResult).append("<div>Error 404-Not Found Requesting Page</div>"+errdata);
+			}
+		});
+   }
+   ,
+   saveReply:function (formid,successTemplate,successResult,errorTemplate,errorResult)
+   {
+	   
+	   if (!$("#"+formid).validationEngine("validate"))
+		{
+			return false;
+		} 
+		var	params=$("#"+formid).serialize();
+		$.ajax({
+			url:exchangePath+"/f_exchange/saveReply.shtml",
+			data:params,
+			cache:false,
+			type:"post",
+			dataType:"json",
+			success:function(data) {
+				if(typeof(data.success) == 'undefined')
+				{
+					$("#"+errorResult).attr("innerHTML",data);
+					return;
+				}
+				if (data.success)
+				{
+				    $("#"+successResult).setTemplateElement(successTemplate);
+				    $("#"+successResult).processTemplate(data.result);
+				}else{
+				    $("#"+errorResult).setTemplateElement(errorTemplate);
+				    $("#"+errorResult).processTemplate(data.result);
+				}
+			},
+			error:function(errdata,request, settings){
+				$("#"+errorResult).append("<div>Error 404-Not Found Requesting Page</div>"+errdata);
+			}
+		});
+		return true;
+   }
+   ,
+   saveMultiFormItem:function (formid,successTemplate,successResult,errorTemplate,errorResult)
+   {
+	   if (!$("#"+formid).validationEngine("validate"))
+		{
+			return false;
+		} 
+		
+		$.ajaxFileUpload
+		(
+			{
+				url:exchangePath+'/f_exchange/saveMultiFormItem.shtml',
+				secureuri:false,
+				oldFormId:formid,//fileElementId:'fileToUpload',
+				dataType: 'json',
+				success: function (data, status)
+				{
+					if(typeof(data.success) == 'undefined')
+					{
+						$("#"+errorResult).attr("innerHTML",data);
+						return;
+					}
+					if (data.success)
+					{
+						$("#"+successResult).setTemplateElement(successTemplate);
+						$("#"+successResult).processTemplate(data.result);
+					}else{
+						$("#"+errorResult).setTemplateElement(errorTemplate);
+						$("#"+errorResult).processTemplate(data.result);
+					}
+					
+				},
+				error: function (errdata, status, e)
+				{
+					$("#"+errorResult).append("<div>Error 404-Not Found Requesting Page</div>"+errdata);
+				}
+			}
+		)
+
+   }
+   ,
+   getType:function (siteid,functionid,parentid,successTemplate,successResult,errorTemplate,errorResult)
+   {
+		 var params="siteid="+siteid+"&functionid="+functionid+"&parentid="+parentid;
+		 $.ajax({
+			url:exchangePath+"/f_exchange/getType.shtml",
+			data:params,
+			cache:false,
+			async:false,
+			type:"post",
+			dataType:"json",
+			success:function(data) {
+				if(typeof(data.success) == 'undefined')
+				{
+					$("#"+errorResult).attr("innerHTML",data);
+					return;
+				}
+				if (data.success)
+				{
+				    $("#"+successResult).setTemplateElement(successTemplate);
+				    $("#"+successResult).processTemplate(data.result);
+				}else{
+				    $("#"+errorResult).setTemplateElement(errorTemplate);
+				    $("#"+errorResult).processTemplate(data.result);
+				}
+			},
+			error:function(errdata,request, settings){
+				$("#"+errorResult).append("<div>Error 404-Not Found Requesting Page</div>"+errdata);
+			}
+		});
+   }
+   ,
+   getDepart:function (siteid,functionid,parentid,successTemplate,successResult,errorTemplate,errorResult)
+   {
+		 var params="siteid="+siteid+"&functionid="+functionid+"&parentid="+parentid;
+		 $.ajax({
+			url:exchangePath+"/f_exchange/getDepart.shtml",
+			data:params,
+			cache:false,
+			type:"post",
+			dataType:"json",
+			success:function(data) {
+				if(typeof(data.success) == 'undefined')
+				{
+					$("#"+errorResult).attr("innerHTML",data);
+					return;
+				}
+				if (data.success)
+				{
+				    $("#"+successResult).setTemplateElement(successTemplate);
+				    $("#"+successResult).processTemplate(data.result);
+				}else{
+				    $("#"+errorResult).setTemplateElement(errorTemplate);
+				    $("#"+errorResult).processTemplate(data.result);
+				}
+			},
+			error:function(errdata,request, settings){
+				$("#"+errorResult).append("<div>Error 404-Not Found Requesting Page</div>"+errdata);
+			}
+		});
+   }
+   ,
+   getConfig:function (siteid,functionid)
+   {
+		 var params="siteid="+siteid+"&functionid="+functionid;
+		 $.ajax({
+			url:exchangePath+"/f_exchange/getConfig.shtml",
+			data:params,
+			cache:false,
+			type:"post",
+			dataType:"json",
+			success:function(data) {
+				if(typeof(data.success) == 'undefined')
+				{
+					return null;
+				}
+				if (data.success)
+				{
+				    return data.result;
+				}else{
+				    return null;
+				}
+			},
+			error:function(errdata,request, settings){
+				return null;
+			}
+		});
+   },getValidateCode:function (siteid,functionid,validateCodeImg)
+   {
+		var url=exchangePath+"/f_exchange/getValidateCode.shtml?siteid="+siteid+"&functionid="+functionid+"&rnd="+Math.random();
+		$("#"+validateCodeImg).attr("src",url);
+		//document.getElementById(validateCodeImg).src=url;
+   },
+    getContentList:function (siteid,functionid,searchformid,successTemplate,successResult,errorTemplate,errorResult,page,pagesize,distance)
+   {			  
+
+		 var params="siteid="+siteid+"&functionid="+functionid;
+		 if (searchformid!=undefined)
+		 {
+		 	params+="&"+$("#"+searchformid).serialize();
+		 }
+		 if (page!=undefined)
+		 {
+			 params+="&page="+page;
+		 }
+		 if (pagesize!=undefined)
+		 {
+			 params+="&pagesize="+pagesize;
+		 }
+		 if (distance==undefined)
+		 {
+		 	distance=5;
+		 }
+		 $.ajax({
+			url:exchangePath+"/f_exchange/getContentList.shtml",
+			data:params,
+			cache:false,
+			async:false,
+			type:"post",
+			dataType:"json",
+			success:function(data) {
+				if(typeof(data.success) == 'undefined')
+				{
+				
+					$("#"+errorResult).attr("innerHTML",data);
+					return;
+				}
+				if (data.success)
+				{
+					var startNum;
+					var endNum;
+					var endSupply=0;
+					var curPageNo=data.result.currentPageNo;
+					var totalPageCount=data.result.totalPageCount;
+					if (curPageNo-distance<1)
+					{
+						startNum=1;
+						
+					}else
+					{
+						startNum=curPageNo-distance;
+					}
+					if (curPageNo+distance>totalPageCount)
+					{
+						endNum=totalPageCount;
+						endSupply=curPageNo+distance-totalPageCount;
+					}else
+					{
+						endNum=curPageNo+distance;
+					}
+					if (startNum==1&&totalPageCount>distance*2)
+					{
+							endNum=distance*2;
+					}
+					if (endSupply>0)
+					{
+							startNum=startNum-endSupply;
+							if (startNum<1)
+							startNum=1;
+					}
+					data.result.startNum=startNum;
+					data.result.endNum=endNum;
+				    $("#"+successResult).setTemplateElement(successTemplate,null,{filter_data:false});
+				    $("#"+successResult).processTemplate(data.result);
+				}else{
+				    $("#"+errorResult).setTemplateElement(errorTemplate);
+				    $("#"+errorResult).processTemplate(data.result);
+				}
+			},
+			error:function(errdata,request, settings){
+				$("#"+errorResult).append("<div>Error 404-Not Found Requesting Page</div>"+errdata);
+			}
+		});
+   },
+    getMemeberContentList:function (siteid,functionid,searchformid,successTemplate,successResult,errorTemplate,errorResult,page,pagesize,distance)
+   {			  
+
+		 var params="siteid="+siteid+"&functionid="+functionid;
+		 if (searchformid!=undefined)
+		 {
+		 	params+="&"+$("#"+searchformid).serialize();
+		 }
+		 if (page!=undefined)
+		 {
+			 params+="&page="+page;
+		 }
+		 if (pagesize!=undefined)
+		 {
+			 params+="&pagesize="+pagesize;
+		 }
+		 if (distance==undefined)
+		 {
+		 	distance=5;
+		 }
+		 $.ajax({
+			url:exchangePath+"/f_exchange/getMemberContentList.shtml",
+			data:params,
+			cache:false,
+			async:false,
+			type:"post",
+			dataType:"json",
+			success:function(data) {
+				if(typeof(data.success) == 'undefined')
+				{
+				
+					$("#"+errorResult).attr("innerHTML",data);
+					return;
+				}
+				if (data.success)
+				{
+					var startNum;
+					var endNum;
+					var endSupply=0;
+					var curPageNo=data.result.currentPageNo;
+					var totalPageCount=data.result.totalPageCount;
+					if (curPageNo-distance<1)
+					{
+						startNum=1;
+						
+					}else
+					{
+						startNum=curPageNo-distance;
+					}
+					if (curPageNo+distance>totalPageCount)
+					{
+						endNum=totalPageCount;
+						endSupply=curPageNo+distance-totalPageCount;
+					}else
+					{
+						endNum=curPageNo+distance;
+					}
+					if (startNum==1&&totalPageCount>distance*2)
+					{
+							endNum=distance*2;
+					}
+					if (endSupply>0)
+					{
+							startNum=startNum-endSupply;
+							if (startNum<1)
+							startNum=1;
+					}
+					data.result.startNum=startNum;
+					data.result.endNum=endNum;
+				    $("#"+successResult).setTemplateElement(successTemplate,null,{filter_data:false});
+				    $("#"+successResult).processTemplate(data.result);
+				}else{
+				    $("#"+errorResult).setTemplateElement(errorTemplate);
+				    $("#"+errorResult).processTemplate(data.result);
+				}
+			},
+			error:function(errdata,request, settings){
+				$("#"+errorResult).append("<div>Error 404-Not Found Requesting Page</div>"+errdata);
+			}
+		});
+   },getRepositoryList:function (siteid,functionid,searchformid,successTemplate,successResult,errorTemplate,errorResult,page,pagesize,distance)
+   {			  
+         
+		 var params="siteid="+siteid+"&functionid="+functionid
+		 if (searchformid!=null&&searchformid!='')
+		 params+="&"+$("#"+searchformid).serialize();
+		 if (page!=undefined)
+		 {
+			 params+="&page="+page;
+		 }
+		 if (pagesize!=undefined)
+		 {
+			 params+="&pagesize="+pagesize;
+		 }
+		 if (distance==undefined)
+		 {
+		 	distance=5;
+		 }
+		 $.ajax({
+			url:exchangePath+"/f_exchange/getRepositoryList.shtml",
+			data:params,
+			cache:false,
+			async:false,
+			type:"post",
+			dataType:"json",
+			success:function(data) {
+				if(typeof(data.success) == 'undefined')
+				{
+					$("#"+errorResult).attr("innerHTML",data);
+					return;
+				}
+				if (data.success)
+				{   
+				    var startNum;
+					var endNum;
+					var endSupply=0;
+					var curPageNo=data.result.currentPageNo;
+					var totalPageCount=data.result.totalPageCount;
+					if (curPageNo-distance<1)
+					{
+						startNum=1;
+						
+					}else
+					{
+						startNum=curPageNo-distance;
+					}
+					if (curPageNo+distance>totalPageCount)
+					{
+						endNum=totalPageCount;
+						endSupply=curPageNo+distance-totalPageCount;
+					}else
+					{
+						endNum=curPageNo+distance;
+					}
+					if (startNum==1&&totalPageCount>distance*2)
+					{
+							endNum=distance*2;
+					}
+					if (endSupply>0)
+					{
+							startNum=startNum-endSupply;
+							if (startNum<1)
+							startNum=1;
+					}
+					data.result.startNum=startNum;
+					data.result.endNum=endNum;
+				    $("#"+successResult).setTemplateElement(successTemplate,null,{filter_data:false});
+				    $("#"+successResult).processTemplate(data.result);
+				}else{
+				    $("#"+errorResult).setTemplateElement(errorTemplate);
+				    $("#"+errorResult).processTemplate(data.result);
+				}
+			},
+			error:function(errdata,request, settings){
+				$("#"+errorResult).append("<div>Error 404-Not Found Requesting Page</div>"+errdata);
+			}
+		});
+   },
+   getRepositoryListAll:function (siteid,searchformid,successTemplate,successResult,errorTemplate,errorResult,page,pagesize,distance)
+   {			  
+         
+		 var params="siteid="+siteid;
+		 if (searchformid!=null&&searchformid!='')
+		 params+="&"+$("#"+searchformid).serialize();
+		 if (page!=undefined)
+		 {
+			 params+="&page="+page;
+		 }
+		 if (pagesize!=undefined)
+		 {
+			 params+="&pagesize="+pagesize;
+		 }
+		 if (distance==undefined)
+		 {
+		 	distance=5;
+		 }
+		 $.ajax({
+			url:exchangePath+"/f_exchange/getRepositoryList.shtml",
+			data:params,
+			cache:false,
+			async:false,
+			type:"post",
+			dataType:"json",
+			success:function(data) {
+				if(typeof(data.success) == 'undefined')
+				{
+					$("#"+errorResult).attr("innerHTML",data);
+					return;
+				}
+				if (data.success)
+				{   
+				    var startNum;
+					var endNum;
+					var endSupply=0;
+					var curPageNo=data.result.currentPageNo;
+					var totalPageCount=data.result.totalPageCount;
+					if (curPageNo-distance<1)
+					{
+						startNum=1;
+						
+					}else
+					{
+						startNum=curPageNo-distance;
+					}
+					if (curPageNo+distance>totalPageCount)
+					{
+						endNum=totalPageCount;
+						endSupply=curPageNo+distance-totalPageCount;
+					}else
+					{
+						endNum=curPageNo+distance;
+					}
+					if (startNum==1&&totalPageCount>distance*2)
+					{
+							endNum=distance*2;
+					}
+					if (endSupply>0)
+					{
+							startNum=startNum-endSupply;
+							if (startNum<1)
+							startNum=1;
+					}
+					data.result.startNum=startNum;
+					data.result.endNum=endNum;
+				    $("#"+successResult).setTemplateElement(successTemplate,null,{filter_data:false});
+				    $("#"+successResult).processTemplate(data.result);
+				}else{
+				    $("#"+errorResult).setTemplateElement(errorTemplate);
+				    $("#"+errorResult).processTemplate(data.result);
+				}
+			},
+			error:function(errdata,request, settings){
+				$("#"+errorResult).append("<div>Error 404-Not Found Requesting Page</div>"+errdata);
+			}
+		});
+   },
+    getContentById:function (siteid,functionid,contentid,successTemplate,successResult,errorTemplate,errorResult,memberflag)
+   {			  
+
+		 var params="siteid="+siteid+"&functionid="+functionid+"&id="+contentid;
+		 if (memberflag!=undefined)
+		 {
+			 params+="&memberflag="+memberflag;
+		 }
+		 $.ajax({
+			url:exchangePath+"/f_exchange/getContentDetailById.shtml",
+			data:params,
+			cache:false,
+			async:false,
+			type:"post",
+			dataType:"json",
+			success:function(data) {
+				if(typeof(data.success) == 'undefined')
+				{
+					$("#"+errorResult).attr("innerHTML",data);
+					return;
+				}
+				if (data.success)
+				{
+				    $("#"+successResult).setTemplateElement(successTemplate,null,{filter_data:false});
+				    $("#"+successResult).processTemplate(data.result);
+				}else{
+				    $("#"+errorResult).setTemplateElement(errorTemplate);
+				    $("#"+errorResult).processTemplate(data.result);
+				}
+			},
+			error:function(errdata,request, settings){
+				$("#"+errorResult).append("<div>Error 404-Not Found Requesting Page</div>"+errdata);
+			}
+		});
+   },
+    getRepositoryById:function (siteid,functionid,repositoryid,successTemplate,successResult,errorTemplate,errorResult)
+   {			  
+
+		 var params="siteid="+siteid+"&functionid="+functionid+"&id="+repositoryid;
+	
+		 $.ajax({
+			url:exchangePath+"/f_exchange/getRepositoryDetail.shtml",
+			data:params,
+			cache:false,
+			async:false,
+			type:"post",
+			dataType:"json",
+			success:function(data) {
+				if(typeof(data.success) == 'undefined')
+				{
+					$("#"+errorResult).attr("innerHTML",data);
+					return;
+				}
+				if (data.success)
+				{
+				    $("#"+successResult).setTemplateElement(successTemplate,null,{filter_data:false});
+				    $("#"+successResult).processTemplate(data.result);
+				}else{
+				    $("#"+errorResult).setTemplateElement(errorTemplate);
+				    $("#"+errorResult).processTemplate(data.result);
+				}
+			},
+			error:function(errdata,request, settings){
+				$("#"+errorResult).append("<div>Error 404-Not Found Requesting Page</div>"+errdata);
+			}
+		});
+   },
+    getContentByCode:function (siteid,functionid,code,password,successTemplate,successResult,errorTemplate,errorResult)
+   {			  
+
+		 var params="siteid="+siteid+"&functionid="+functionid+"&operatid="+code+"&operatpassword="+password;
+		 $.ajax({
+			url:exchangePath+"/f_exchange/getContentDetailByPassword.shtml",
+			data:params,
+			cache:false,
+			async:false,
+			type:"post",
+			dataType:"json",
+			success:function(data) {
+				if(typeof(data.success) == 'undefined')
+				{
+					$("#"+errorResult).attr("innerHTML",data);
+					return;
+				}
+				if (data.success)
+				{
+				    $("#"+successResult).setTemplateElement(successTemplate,null,{filter_data:false});
+				    $("#"+successResult).processTemplate(data.result);
+				}else{
+				    $("#"+errorResult).setTemplateElement(errorTemplate);
+				    $("#"+errorResult).processTemplate(data.result);
+				}
+			},
+			error:function(errdata,request, settings){
+				$("#"+errorResult).append("<div>Error 404-Not Found Requesting Page</div>"+errdata);
+			}
+		});
+   },//获得回复列表通过互动项ID wangp
+   getReplyList:function (contentid,successTemplate,successResult,errorTemplate,errorResult,page,pagesize,distance)
+   {			  
+		 var params="id="+contentid;
+		 if (page!=undefined)
+		 {
+			 params+="&page="+page;
+		 }
+		 if (pagesize!=undefined)
+		 {
+			 params+="&pagesize="+pagesize;
+		 }
+		  if (distance==undefined)
+		 {
+		 	distance=5;
+		 }
+		 $.ajax({
+			url:exchangePath+"/f_exchange/getReplyList.shtml",
+			data:params,
+			cache:false,
+			async:false,
+			type:"post",
+			dataType:"json",
+			success:function(data) {
+				if(typeof(data.success) == 'undefined')
+				{
+					$("#"+errorResult).attr("innerHTML",data);
+					return;
+				}
+				if (data.success)
+				{ 
+				    var startNum;
+					var endNum;
+					var endSupply=0;
+					var curPageNo=data.result.currentPageNo;
+					var totalPageCount=data.result.totalPageCount;
+					if (curPageNo-distance<1)
+					{
+						startNum=1;
+						
+					}else
+					{
+						startNum=curPageNo-distance;
+					}
+					if (curPageNo+distance>totalPageCount)
+					{
+						endNum=totalPageCount;
+						endSupply=curPageNo+distance-totalPageCount;
+					}else
+					{
+						endNum=curPageNo+distance;
+					}
+					if (startNum==1&&totalPageCount>distance*2)
+					{
+							endNum=distance*2;
+					}
+					if (endSupply>0)
+					{
+							startNum=startNum-endSupply;
+							if (startNum<1)
+							startNum=1;
+					}
+					data.result.startNum=startNum;
+					data.result.endNum=endNum;
+				    $("#"+successResult).setTemplateElement(successTemplate,null,{filter_data:false});
+				    $("#"+successResult).processTemplate(data.result,{"id":contentid});
+				}else{
+				    $("#"+errorResult).setTemplateElement(errorTemplate);
+				    $("#"+errorResult).processTemplate(data.result);
+				}
+			},
+			error:function(errdata,request, settings){
+			$("#"+errorResult).empty();
+				$("#"+errorResult).append("<div>Error 404-Not Found Requesting Page</div>"+errdata);
+			}
+		});
+   },
+   getReplyListByFunctionId:function (functionid,successTemplate,successResult,errorTemplate,errorResult,page,pagesize,distance)
+	{			  //获得一个互动下所有已经审核的回复列表  wangp
+			 var params="functionid="+functionid;
+			 if (page!=undefined)
+			 {
+				 params+="&page="+page;
+			 }
+			 if (pagesize!=undefined)
+			 {
+				 params+="&pagesize="+pagesize;
+			 }
+			  if (distance==undefined)
+			 {
+			 	distance=5;
+			 }
+			 $.ajax({
+				url:exchangePath+"/f_exchange/getReplyList.shtml",
+				data:params,
+				cache:false,
+				async:false,
+				type:"post",
+				dataType:"json",
+				success:function(data) {
+					if(typeof(data.success) == 'undefined')
+					{
+						$("#"+errorResult).attr("innerHTML",data);
+						return;
+					}
+					if (data.success)
+					{ 
+					    var startNum;
+						var endNum;
+						var endSupply=0;
+						var curPageNo=data.result.currentPageNo;
+						var totalPageCount=data.result.totalPageCount;
+						if (curPageNo-distance<1)
+						{
+							startNum=1;
+							
+						}else
+						{
+							startNum=curPageNo-distance;
+						}
+						if (curPageNo+distance>totalPageCount)
+						{
+							endNum=totalPageCount;
+							endSupply=curPageNo+distance-totalPageCount;
+						}else
+						{
+							endNum=curPageNo+distance;
+						}
+						if (startNum==1&&totalPageCount>distance*2)
+						{
+								endNum=distance*2;
+						}
+						if (endSupply>0)
+						{
+								startNum=startNum-endSupply;
+								if (startNum<1)
+								startNum=1;
+						}
+						data.result.startNum=startNum;
+						data.result.endNum=endNum;
+					    $("#"+successResult).setTemplateElement(successTemplate,null,{filter_data:false});
+					    $("#"+successResult).processTemplate(data.result);
+					}else{
+					    $("#"+errorResult).setTemplateElement(errorTemplate);
+					    $("#"+errorResult).processTemplate(data.result);
+					}
+				},
+				error:function(errdata,request, settings){
+				$("#"+errorResult).empty();
+					$("#"+errorResult).append("<div>Error 404-Not Found Requesting Page</div>"+errdata);
+				}
+			});
+	},getAttById:function (attid)
+	{			  
+			var url=exchangePath+"/f_exchange/getResource.shtml?id="+attid;
+			window.location.href=url;
+	},
+	cleanCache:function ()
+	{
+			var url=exchangePath+"/f_exchange/cleanCache.shtml"
+			$.get(url);
+			alert("Ok");
+    },  
+    getSubObj:function (parentid,successTemplate,successResult,errorTemplate,errorResult)
+    {
+		 var params="parentid="+parentid;
+		 $.ajax({
+			url:exchangePath+"/f_exchange/getSubObj.shtml",
+			data:params,
+			cache:false,
+			type:"post",
+			dataType:"json",
+			success:function(data) {
+				if(typeof(data.success) == 'undefined')
+				{
+					$("#"+errorResult).attr("innerHTML",data);
+					return;
+				}
+				if (data.success)
+				{
+				    $("#"+successResult).setTemplateElement(successTemplate);
+				    $("#"+successResult).processTemplate(data.result);
+				}else{
+				    $("#"+errorResult).setTemplateElement(errorTemplate);
+				    $("#"+errorResult).processTemplate(data.result);
+				}
+			},
+			error:function(errdata,request, settings){
+				$("#"+errorResult).append("<div>Error 404-Not Found Requesting Page</div>"+errdata);
+			}
+		});
+  },
+  getTypeByObj:function (objid,successTemplate,successResult,errorTemplate,errorResult)
+  {
+	  var params="objid="+objid;
+	  $.ajax({
+		  url:exchangePath+"/f_exchange/getTypeByObj.do",
+		  data:params,
+		  cache:false,
+		  type:"post",
+		  dataType:"json",
+		  success:function(data) {
+		  if(typeof(data.success) == 'undefined')
+		  {
+			  $("#"+errorResult).attr("innerHTML",data);
+			  return;
+		  }
+		  if (data.success)
+		  {
+			  $("#"+successResult).setTemplateElement(successTemplate);
+			  $("#"+successResult).processTemplate(data.result);
+		  }else{
+			  $("#"+errorResult).setTemplateElement(errorTemplate);
+			  $("#"+errorResult).processTemplate(data.result);
+		  }
+	  }, 
+	  error:function(errdata,request, settings){
+		  $("#"+errorResult).append("<div>Error 404-Not Found Requesting Page</div>"+errdata);
+	  }
+	  });
+  },
+  getDealByTypeObj:function (objid,typeid,successTemplate,successResult,errorTemplate,errorResult)
+  {
+	  var params="objid="+objid+"&typeid="+typeid;
+	  $.ajax({
+		  url:exchangePath+"/f_exchange/getDealByTypeObj.do",
+		  data:params,
+		  cache:false,
+		  type:"post",
+		  dataType:"json",
+		  success:function(data) {
+		  if(typeof(data.success) == 'undefined')
+		  {
+			  $("#"+errorResult).attr("innerHTML",data);
+			  return;
+		  }
+		  if (data.success)
+		  {
+			  $("#"+successResult).setTemplateElement(successTemplate);
+			  $("#"+successResult).processTemplate(data.result);
+		  }else{
+			  $("#"+errorResult).setTemplateElement(errorTemplate);
+			  $("#"+errorResult).processTemplate(data.result);
+		  }
+	  },
+	  error:function(errdata,request, settings){
+		  $("#"+errorResult).append("<div>Error 404-Not Found Requesting Page</div>"+errdata);
+	  }
+	  });
+  },
+  //获取提交类型
+  //一级类型不动，从二级类型开始取
+  //parentId：父类型的id，eg：001
+  getSubType:function(successTemplate,successResult,errorTemplate,errorResult,parentId,siteId,functionId)
+  {
+	    if(parentId == undefined) {
+	    	parentId = "";
+	    }
+	  	var params="parentId="+parentId;
+	  	
+	    if(siteId != undefined) {
+	    	params = params+"&siteId="+siteId;
+	    }
+	    
+	    if(functionId != undefined) {
+	    	params = params+"&functionId="+functionId;
+	    }	    
+		 $.ajax({
+			url:exchangePath+"/f_exchange/getSubType.shtml",
+			data:params,
+			cache:false,
+			type:"post",
+			dataType:"json",
+			success:function(data) {
+				if(typeof(data.success) == 'undefined')
+				{
+					$("#"+errorResult).attr("innerHTML",data);
+					return;
+				}
+				if (data.success)
+				{
+				    $("#"+successResult).setTemplateElement(successTemplate);
+				    $("#"+successResult).processTemplate(data.result);
+				}else{
+				    $("#"+errorResult).setTemplateElement(errorTemplate);
+				    $("#"+errorResult).processTemplate(data.result);
+				}
+			},
+			error:function(errdata,request, settings){
+				$("#"+errorResult).append("<div>Error 404-Not Found Requesting Page</div>"+errdata);
+			}
+		});
+  }, getSdgaSqztContentList:function (siteid,functionid,searchformid,successTemplate,successResult,errorTemplate,errorResult,page,pagesize,distance)
+  {			  
+
+		 var params="siteid="+siteid+"&functionid="+functionid+"&functionidlist=mssd,wyqz,wyjy";
+		 if (searchformid!=undefined)
+		 {
+		 	params+="&"+$("#"+searchformid).serialize();
+		 }
+		 if (page!=undefined)
+		 {
+			 params+="&page="+page;
+		 }
+		 if (pagesize!=undefined)
+		 {
+			 params+="&pagesize="+pagesize;
+		 }
+		 if (distance==undefined)
+		 {
+		 	distance=5;
+		 }
+		 $.ajax({
+			url:exchangePath+"/f_exchange/getSdgaSqztContentList.shtml",
+			data:params,
+			cache:false,
+			async:false,
+			type:"post",
+			dataType:"json",
+			success:function(data) {
+				if(typeof(data.success) == 'undefined')
+				{
+				
+					$("#"+errorResult).attr("innerHTML",data);
+					return;
+				}
+				if (data.success)
+				{
+					var startNum;
+					var endNum;
+					var endSupply=0;
+					var curPageNo=data.result.currentPageNo;
+					var totalPageCount=data.result.totalPageCount;
+					if (curPageNo-distance<1)
+					{
+						startNum=1;
+						
+					}else
+					{
+						startNum=curPageNo-distance;
+					}
+					if (curPageNo+distance>totalPageCount)
+					{
+						endNum=totalPageCount;
+						endSupply=curPageNo+distance-totalPageCount;
+					}else
+					{
+						endNum=curPageNo+distance;
+					}
+					if (startNum==1&&totalPageCount>distance*2)
+					{
+							endNum=distance*2;
+					}
+					if (endSupply>0)
+					{
+							startNum=startNum-endSupply;
+							if (startNum<1)
+							startNum=1;
+					}
+					data.result.startNum=startNum;
+					data.result.endNum=endNum;
+				    $("#"+successResult).setTemplateElement(successTemplate,null,{filter_data:false});
+				    $("#"+successResult).processTemplate(data.result);
+				}else{
+				    $("#"+errorResult).setTemplateElement(errorTemplate);
+				    $("#"+errorResult).processTemplate(data.result);
+				}
+			},
+			error:function(errdata,request, settings){
+				$("#"+errorResult).append("<div>Error 404-Not Found Requesting Page</div>"+errdata);
+			}
+		});
+ }
+}
+ 
+function FieldFactory(){	
+}
+ 
+FieldFactory.getHtml = function(fieldName,obj,validateClass){
+	var ff = new FieldFactory();
+	for(var p in ff){
+		if(typeof(ff[p])=='function' && p == fieldName){
+			return ff[p](obj,validateClass);
+		}
+	}
+	return '';
+}  
+ 
+FieldFactory.getFieldJson = function(inputtype,obj){
+	var param1 = "";
+	var i = 0;
+	for(var p in obj){
+		if(i++!=0){
+			param1 += '&';
+		}
+		param1 += p+"="+obj[p];
+	}
+	var txt =  $.ajax({
+		  url: exchangePath+"/f_exchange/getFieldJsonData.shtml?inputtypejson="+inputtype,
+		  dataType :'text',
+		  data:param1,
+		  async: false
+		 }).responseText; 
+	return txt;
+}
+
+
+FieldFactory.prototype.text = function(n, validateClass) {
+	var strTmp = '';
+	if (n.defaultvalue !=undefined&&n.defaultvalue != "") {
+		strTmp += "<input type=\"text\" id=\"" + n.fieldname + "\" name=\""
+				+ n.fieldname + "\" value=\"" + n.defaultvalue + "\" "
+				+ validateClass + "/>";
+	} else {
+		strTmp += "<input type=\"text\" id=\"" + n.fieldname + "\" name=\""
+				+ n.fieldname + "\" " + validateClass + "/>";
+	}
+	return strTmp;
+}
+
+FieldFactory.prototype.textarea = function(n, validateClass) {
+	var strTmp = '';
+	if (n.defaultvalue !=undefined&&n.defaultvalue != "") {
+		strTmp += "<textarea id=\"" + n.fieldname + "\" name=\"" + n.fieldname
+				+ "\" " + validateClass + ">" + n.defaultvalue + "</textarea>";
+	} else {
+		strTmp += "<textarea id=\"" + n.fieldname + "\" name=\"" + n.fieldname
+				+ "\" " + validateClass + "></textarea>";
+	}
+	return strTmp;
+}
+
+FieldFactory.prototype.radio = function(n, validateClass) {
+	var strTmp = '';
+	var s = n.options.replace("\r", "").split("\n");
+	for ( var i = 0; i < s.length; i++) {
+		var ss = s[i].split("|");
+		if (ss.length < 2) {
+			ss[1] = ss[0];
+		}
+		if (n.defaultvalue == ss[0]) {
+			strTmp += "<input type=\"radio\" id=\"" + n.fieldname
+					+ "\" name=\"" + n.fieldname + "\" value=\"" + ss[0]
+					+ "\"/ checked=\"checked\" " + validateClass + ">" + ss[1];
+		} else {
+			strTmp += "<input type=\"radio\" id=\"" + n.fieldname
+					+ "\" name=\"" + n.fieldname + "\" value=\"" + ss[0]
+					+ "\" " + validateClass + "/>" + ss[1];
+		}
+
+	}
+	return strTmp;
+}
+
+FieldFactory.prototype.checkbox = function(n, validateClass) {
+	var strTmp = '';
+	var s = n.options.split("\n");
+	for ( var i = 0; i < s.length; i++) {
+		var ss = s[i].split("|");
+		if (ss.length < 2) {
+			ss[1] = ss[0];
+		}
+		if (n.defaultvalue == ss[0]) {
+			strTmp += "<input type=\"checkbox\" id=\"" + n.fieldname
+					+ "\" name=\"" + n.fieldname + "\" value=\"" + ss[0]
+					+ "\"/ checked=\"checked\" " + validateClass + "/>" + ss[1];
+		} else {
+			strTmp += "<input type=\"checkbox\" id=\"" + n.fieldname
+					+ "\" name=\"" + n.fieldname + "\" value=\"" + ss[0]
+					+ "\" " + validateClass + "/>" + ss[1];
+		}
+		if ((i + 1) % 4 == 0) {
+			strTmp += "<br/>";
+		}
+	}
+	return strTmp;
+}
+
+FieldFactory.prototype.select = function(n, validateClass) {
+	var strTmp = '';
+	var s = n.options.split("\n");
+	strTmp += "<select id=\"" + n.fieldname + "\" name=\"" + n.fieldname
+			+ "\" " + validateClass + "/>";
+	for ( var i = 0; i < s.length; i++) {
+		strTmp += "<option value=\"" + s[i] + "\">" + s[i] + "</option>";
+	}
+	strTmp += "</select>";
+	return strTmp;
+}
+
+FieldFactory.prototype.file = function(n, validateClass) {
+	var strTmp = '';
+	strTmp += "<input type=\"file\" id=\"" + n.fieldname + "\" name=\""
+			+ n.fieldname + "\"  " + validateClass
+			+ " onchange=\"javascript:$.checkFileInfo(this,'"
+			+ n.validatescript + "'," + n.maxlength + ");\"/>";
+
+	return strTmp;
+}
+
+FieldFactory.prototype.div = function(n, validateClass) {
+	var strTmp = '';
+	strTmp += "<div id=\"" + n.fieldname + "Div\" name=\"" + n.fieldname
+			+ "Div\" " + validateClass + "/>";
+
+	return strTmp;
+}
+
+FieldFactory.prototype.img = function(n, validateClass) {
+	var strTmp = '';
+	var urlTmp = exchangePath + "/f_exchange/getValidateCode.shtml?siteid="
+			+ siteid + "&functionid=" + functionid + "&rnd=" + Math.random();
+	strTmp += "<table><tr><td><input id=\""
+			+ n.fieldname
+			+ "\" name=\""
+			+ n.fieldname
+			+ "\"  "
+			+ validateClass
+			+ "  /></td><td><img id=\""
+			+ n.fieldname
+			+ "Img\" name=\""
+			+ n.fieldname
+			+ "Img\" src=\""
+			+ urlTmp
+			+ "\"/></td><td> <a href=\"javascript:void(0);\" onclick=\"javascript:$.cmsexchange.getValidateCode('"
+			+ siteid + "','" + functionid + "','" + n.fieldname
+			+ "Img');\">&nbsp;看不清，换一张</a></td></tr></table>";
+	return strTmp;
+}
+
+FieldFactory.prototype.dict = function(n, validateClass) {
+	var strTmp = '';
+	var id = n.id;
+	strTmp += "<select id=\"" + n.fieldname + "\" name=\"" + n.fieldname
+			+ "\" " + validateClass + "/>";
+	var txt = FieldFactory.getFieldJson(n.inputtype,{options:n.options});
+	if(txt){
+		var os = eval(txt);
+		for(var i = 0;i<os.length;i++){
+			strTmp += "<option value=\"" + os[i].code + "\">" + os[i].value + "</option>";
+		}
+	}
+	strTmp += "</select>";
+	return strTmp;
+}

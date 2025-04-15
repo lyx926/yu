@@ -1,0 +1,133 @@
+/**
+ * 从静态页面的头部接受参数 求出此参数的值
+ */
+function request(paras){   
+    var url=location.href; 
+    var paraString = url.substring(url.indexOf("?")+1,url.length).split("&");     
+    var paraObj = {}     
+    for (i=0; j=paraString[i]; i++){     
+        paraObj[j.substring(0,j.indexOf("=")).toLowerCase()] = j.substring(j.indexOf("=")+1,j.length);     
+    }     
+    var returnValue = paraObj[paras.toLowerCase()];     
+    if(typeof(returnValue)=="undefined"){     
+        return "";     
+    }else{     
+        return returnValue;     
+    }     
+}
+/**
+ * 用来给一个URL地址添加一个参数
+ */
+function addParam(url,param,value)
+{
+	if (url.indexOf("?")!=-1)
+	{
+	   return url+"&"+param+"="+value;
+	}else{
+	   return url+"?"+param+"="+value;
+	}
+}
+/**
+ * 字符串截取
+ */
+function subString(str, len, hasDot) 
+{ 
+    var newLength = 0; 
+    var newStr = ""; 
+    var chineseRegex = /[^\x00-\xff]/g; 
+    var singleChar = ""; 
+    var strLength = str.replace(chineseRegex,"**").length; 
+    for(var i = 0;i < strLength;i++) 
+    { 
+        singleChar = str.charAt(i).toString(); 
+        if(singleChar.match(chineseRegex) != null) 
+        { 
+            newLength += 2; 
+        }     
+        else 
+        { 
+            newLength++; 
+        } 
+        if(newLength > len) 
+        { 
+            break; 
+        } 
+        newStr += singleChar; 
+    } 
+     
+    if(hasDot && strLength > len) 
+    { 
+        newStr += "..."; 
+    } 
+    return newStr; 
+} 
+/**
+ * 字符串替换
+ */
+function ReplaceString(s,OldPattern,NewPattern)
+{ 	
+var i;
+var s2 = s;
+var len = OldPattern.length;
+while(s2.indexOf(OldPattern)>0) 
+	{ 	
+		i = s2.indexOf(OldPattern);
+		s2 = s2.substring(0, i) + NewPattern + s2.substring(i + len, s2.length);
+	} 	
+return s2;
+}
+/**
+ * 生成200像素的条形图加%比
+ */
+function getcolumn(total,now,uuid){
+	var rString = "<span style='height:25px;width:200px;background:#f3f3f3'><span style='height:25px;width:";
+	rString+=(now*200/total);rString+="px;";rString+="background:#";rString+=uuid.substr(0, 6);rString+=";display:block;'></span></span>";
+	return rString;
+}
+
+/**
+ * author: wangzht
+ * 判断是否是最新文章
+ * pubdate:文章的发布日期
+ * dayNum:几天之内的算最新文章
+ */
+function isNew(pubdate, dayNum) {
+	var myDate = new Date();
+	var year = myDate.getFullYear();
+	var month = myDate.getMonth() + 1;
+	var day = myDate.getDate();
+	var sysdate = year + "/" + month + "/" + day;
+	pubdate = pubdate.replace(/-/g,"/");
+	var d1 = new Date(sysdate);
+	var d2 = new Date(pubdate);
+	var lack = (d1.getTime() - d2.getTime())/(1000*60*60*24);
+	if(lack<=dayNum) {
+		return true;
+	}
+	return false;
+}
+
+function jsImport(url,success){
+	 var i;
+	 var ss=document.getElementsByTagName("script");
+	 for(i=0;i<ss.length;i++){
+	    if(ss[i].src&&ss[i].src.indexOf(url)!=-1){
+	      return ;
+	    } 
+	 }
+	 var domScript=document.createElement("script");
+	 domScript.type="text/javascript";
+	 domScript.src=url;
+	 success=success||function(){};
+	 
+	 domScript.onload=domScript.onreadystatechange=function(){
+		 if(!this.readyState||'loaded'===this.readyState||'complete'===this.readyState){
+			 success();
+			 this.onload=this.onreadystatechange=null;
+			 this.parentNode.removeChild(this);
+		 }
+	 }
+	 
+	 var head=document.getElementsByTagName("head")[0];
+	 head.appendChild(domScript);
+	}

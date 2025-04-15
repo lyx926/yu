@@ -1,0 +1,370 @@
+//gentleCMS authread JS
+//author boj
+//ajax check authority to read index of channel or article 
+var embedVoteUrl =  embedRootPath+"/embedservice/vote.shtml";
+var embedQuestionUrl = embedRootPath+"/embedservice/question.shtml";
+var embedDiscussUrl = embedRootPath+"/articlediscuss/query.shtml";
+var embedRssUrl = embedRootPath+"/embedservice/rss.shtml";
+var embedArticleDiscussRanking=embedRootPath+"/articlediscuss/articleDiscussRanking.shtml";
+//本文热点评论
+var embedArticleHotDiscuss=embedRootPath+"/articlediscuss/articleHotDiscuss.shtml";
+//提交文章评论
+var embedPostDiscussUrl=embedRootPath+"/articlediscuss/insert.shtml";
+
+var insertAndQuery=embedRootPath+"/articlediscuss/insertAndQuery.shtml";
+
+var CmsDiscussConfig=[];
+var tempToken = "";
+//文章信息类的url
+var articleServiceUrl = embedRootPath+"/embedservice/article.shtml";
+
+jQuery.cmsembed={
+	getVote:function (siteid,votecode,sT,sR,eT,eR){
+	    //get vote simple in index page
+		var params="method=getVote&votecode="+votecode+"&siteId="+siteid;
+		var url = embedVoteUrl;
+		processEmbedRequest(url,params,sT,sR,eT,eR);
+   },showVote:function (id,siteId,sT,sR,eT,eR){
+	    //get vote simple in vote detail page
+	   	var params="method=index&id="+id+"&siteId="+siteId;
+		var url =embedVoteUrl;
+		processEmbedRequest(url,params,sT,sR,eT,eR);
+   },voteSubmit:function (formid,sT,sR,eT,eR){
+	    //get vote simple in vote detail page
+		if (!$("#"+formid).validationEngine("validate"))
+		{
+			return false;
+		}  
+		var	params=$("#"+formid).serialize();
+		params += "&method=submit";
+		var url = embedVoteUrl;
+		processEmbedRequest(url,params,sT,sR,eT,eR);
+	},voteList:function(siteId,sT,sR,eT,eR,page,pagesize){
+		page = (page == undefined?0:page);
+		pagesize = (pagesize == undefined?20:pagesize);
+		var params="method=listVote&siteId="+siteId+"&page="+page+"&pagesize="+pagesize;
+		var url = embedVoteUrl;	
+		processEmbedRequest(url,params,sT,sR,eT,eR);
+    },questionList:function(siteId,sT,sR,eT,eR,page,pagesize){
+		page = (page == undefined?0:page);
+		pagesize = (pagesize == undefined?20:pagesize);
+		var params="method=listQuestion&siteId="+siteId+"&page="+page+"&pagesize="+pagesize;
+		var url = embedQuestionUrl;
+		processEmbedRequest(url,params,sT,sR,eT,eR);
+	},showQuestion:function(id,siteId,sT,sR,eT,eR){
+		var params="method=index&siteId="+siteId+"&id="+id;
+		var url = embedQuestionUrl;
+		processEmbedRequest(url,params,sT,sR,eT,eR);
+	},statQuestion:function(id,siteId,sT,sR,eT,eR){
+		var params="method=stat&siteId="+siteId+"&id="+id;
+		var url = embedQuestionUrl;
+		processEmbedRequest(url,params,sT,sR,eT,eR);
+	},questionSubmit:function(formid,sT,sR,eT,eR){
+		if (!$("#"+formid).validationEngine("validate"))
+		{
+			return false;
+		}
+		var	params=$("#"+formid).serialize();
+		params += "&method=submit";
+		var url =embedQuestionUrl;
+		processEmbedRequest(url,params,sT,sR,eT,eR);
+	},pageDiscuss:function(id,siteId,sT,sR,eT,eR){
+		var params="method=index&siteId="+siteId+"&id="+id;
+		var url = embedDiscussUrl;
+		processEmbedRequest(url,params,sT,sR,eT,eR);
+	},discussSubmit:function(formid,sT,sR,eT,eR){
+		if (!$("#"+formid).validationEngine("validate"))
+		{
+			return false;
+		}
+		var	params=$("#"+formid).serialize();
+		params += "&method=submit";
+		var url =insertAndQuery;
+		processEmbedRequest(url,params,sT,sR,eT,eR);
+	},rssList:function(siteId,sT,sR,eT,eR){
+		var params="method=getRsses&start=-1&siteId="+siteId+"siteid="+siteId;
+		var url = embedRssUrl;
+		processEmbedRequest(url,params,sT,sR,eT,eR);
+	},getPreArticle:function(siteId,articleId,isPreview,spanId,info){
+       	var params="method=getPreArticle&articleId="+articleId+"&isPreview="+isPreview+"&siteId="+siteId;
+		var url = articleServiceUrl;
+		var token = getToken(siteId);
+		processDiv(url,params,spanId,info);
+	},getNextArticle:function(siteId,articleId,isPreview,spanId,info){
+		var params="method=getNextArticle&articleId="+articleId+"&isPreview="+isPreview+"&siteId="+siteId;
+		var url = articleServiceUrl;
+		processDiv(url,params,spanId,info);
+	},getRelationArticles:function(siteId,articleId,isPreview,spanId,textarea,count){
+		var params="method=selectRelationArticles&id="+articleId+"&isPreview="+isPreview+"&siteId="+siteId+"&count="+count;
+		var url = articleServiceUrl;
+		var token = getToken(siteId);
+		showRelationArticles(url,params,spanId,textarea);
+	},getLatestArticles:function(siteId,isPreview,spanId,textarea,count){
+		var params="method=getLatestArticles&isPreview="+isPreview+"&siteId="+siteId+"&count="+count;
+		var url = articleServiceUrl; 
+		showRelationArticles(url,params,spanId,textarea);
+	}
+	
+	,support : function(id){
+		var url=embedRootPath+"/articlediscuss/support.do";
+		$.ajax({
+			url:url,
+			data:{"id":id},
+			type:"post",
+			dataType:"json",
+			async:false,
+			success:function(data) {
+				$("#"+id).html();
+		},
+		error:function(errdata,request, settings){
+			$("#"+id).append("<div>request error!</div>"+errdata);
+			}
+		});
+	}
+	,getCmsDiscussConfig:function(siteId){
+		for(var i=0;i< CmsDiscussConfig.length;i++){
+			if(CmsDiscussConfig[i].siteId==siteId){
+				return CmsDiscussConfig[i];
+			}
+		}
+		var obj={};//文章评论设置
+		var url=embedRootPath+"/articlediscuss/getCmsDiscussConfig.do";
+		$.ajax({
+			url:url,
+			data:{"siteid":siteId},
+			cache:false,
+			type:"post",
+			dataType:"json",
+			async:false,
+			success:function(data) {
+				obj=data;
+		    },
+		error:function(errdata,request, settings){
+			$("#"+spanid).append("<div>request error!</div>"+errdata);
+			}
+		}
+	 	);
+		CmsDiscussConfig.push({siteId:siteId,result:obj.result});
+		return obj;
+	}
+	,isArticleDiscussNeedLogin :function(siteId){
+        var flag=true;		
+		var url=embedRootPath+"/articlediscuss/isNeedLogin.do";
+		$.ajax({
+			url:url,
+			data:{"siteid":siteId},
+			cache:false,
+			type:"post",
+			dataType:"json",
+			async:false,
+			success:function(data) {
+				if(typeof(data.success) == undefined){
+					flag=false;
+					}
+				if (data.success){  
+					flag=true;
+				}else{
+					flag=false;
+				}
+		},
+		error:function(errdata,request, settings){
+			$("#"+spanid).append("<div>request error!</div>"+errdata);
+			}
+		}
+	 	);
+		return flag;
+	}
+	//提交文章评论
+	,postArticleDiscuss:function(formid,spanId,info){
+		var	params=$("#"+formid).serialize();
+		var url=embedPostDiscussUrl;
+		processDiv(url,params,spanId,info);
+	},
+	//文章评论列表页
+	someDiscuss:function(id,siteId,sT,sR,eT,eR,page,pagesize,number){
+		var params="method=someDiscuss&articleid="+id+"&page="+page+"&pageSize="+pagesize;
+		var url = embedDiscussUrl;
+		 $.ajax({
+			  url:url,
+			  type:"post",
+			  data:{number:number,page:page,pagesize:pagesize,articleid:id},
+			  dataType:"json",
+			  success:function(data){
+				  if(typeof(data.success) == undefined){
+						$("#"+eR).attr("innerHTML",data);return;
+						}
+				    if(data.success){
+				    	            var distance=5;
+				                    var startNum;
+				                    var endNum;
+				                    var endSupply=0;
+				                    var curPageNo=data.result.currentPageNo;
+				                    curPageNo=parseInt(curPageNo);
+				                    var totalPageCount=data.result.totalPageCount;
+				                    totalPageCount=parseInt(totalPageCount);
+				                    if (curPageNo-distance<1){
+				                        startNum=1;
+				                    }else{
+				                        startNum=curPageNo-distance;
+				                    }
+				                    if (curPageNo+distance>totalPageCount){
+				                        endNum=totalPageCount;
+				                        endSupply=curPageNo+distance-totalPageCount;
+				                    }else{
+				                        endNum=curPageNo+distance;
+				                    }
+				                    if (startNum==1&&totalPageCount>distance*2){
+				                            endNum=distance*2;
+				                    }
+				                    if (endSupply>0){
+				                            startNum=startNum-endSupply;
+				                            if (startNum<1)
+				                            startNum=1;
+				                    }
+				                    data.result.startNum=startNum;
+				                    data.result.endNum=endNum;
+				             if(data.result.result.length>0){
+				              $("#"+sR).setTemplateElement(sT,null,{filter_data:false});
+				              $("#"+sR).processTemplate(data.result);   
+				             }else{
+				                 $("#"+eR).html("没有查询到符合条件的文章！");
+				             }
+				  }else{
+					  $("#"+eR).html(data.result.message);
+				  }
+			  },
+			  error:function(){
+				  $("#"+eR).html("操作失败！方法存在异常！");
+			  }
+			    });
+	},
+	//最新文章评论
+	articleDiscuss:function(siteId,sT,sR,eT,eR,page,pagesize){
+		var params="method=someDiscuss&siteid="+siteId+"&page="+page+"&pageSize="+pagesize;
+		var url = embedDiscussUrl;
+		processEmbedRequest(url,params,sT,sR,eT,eR);
+	},
+	//本文热点评论
+	articleHotDiscuss:function(articleid,sT,sR,eT,eR,page,pagesize){
+		var params="method=someDiscuss&articleid="+articleid+"&page="+page+"&pageSize="+pagesize;
+		var url = embedArticleHotDiscuss;
+		processEmbedRequest(url,params,sT,sR,eT,eR);
+	},
+	//评论排行
+	articleDiscussRanking:function(siteId,sT,sR,eT,eR,page,pagesize,days){
+		var params= $.param({"siteid":siteId,"page":page,"pageSize":pagesize,"days":days});
+		var url = embedArticleDiscussRanking;
+		processEmbedRequest(url,params,sT,sR,eT,eR);
+	},
+	//获得文章
+	getArticle:function(articleId,siteId,channelId,spanid){
+		var params= $.param({"articleid":articleId,"siteid":siteId,"channelid":channelId});
+		var url =embedRootPath+"/f_articlesearch/getArticleById.do";
+		 	$.ajax({
+				url:url,
+				data:params,
+				cache:false,
+				type:"post",
+				dataType:"json",
+				success:function(data) {
+					if(typeof(data.success) == undefined){
+						$("#"+spanid).attr("innerHTML",data);
+						return;
+						}
+					if (data.success){  
+						$("#"+spanid).html(data.result.name);
+						//data.result.publishurl
+					}
+			},
+			error:function(errdata,request, settings){
+				$("#"+spanid).append("<div>request error!</div>"+errdata);
+				}
+			}
+		 	);
+	}
+
+}
+function showRelationArticles(url,params,spanId,textarea){
+processEmbedRequest(url,params,textarea,spanId,textarea,spanId);
+	
+}
+function processEmbedRequest(url,params,sT,sR,eT,eR){
+	$.ajax({
+        headers: {
+            token: tempToken
+        },
+		url:url,
+		data:params,
+		cache:false,
+		type:"post",
+		dataType:"json",
+		success:function(data) {
+			if(typeof(data.success) == undefined){
+				$("#"+eR).attr("innerHTML",data);return;
+				}
+			if (data.success){
+           
+				$("#"+sR).setTemplateElement(sT,null,{filter_data:false});
+			    $("#"+sR).processTemplate(data.result);
+				}
+			else{
+				
+				 $("#"+eR).setTemplateElement(eT);
+				 $("#"+eR).processTemplate(data.result);}
+				 },
+		error:function(errdata,request, settings){$("#"+eR).append("<div>request error!</div>"+errdata);}
+	});
+}
+//获取请求的数据后为页面的控件赋值
+function processDiv(url,params,spanId,info) {
+	$.ajax({
+		headers: {
+			token: tempToken
+		},
+		url:url,
+		data:params,
+		cache:false,
+		type:"post",
+		dataType:"json",
+		success:function(data) {
+			var result = data.result;
+			
+			if(spanId)
+				$("#"+spanId).empty();
+			if(data.success){  
+				if(result==""||result==null){
+					$("#"+spanId).append(info);
+					return;
+				}
+				var spanInnerHtml = "<a href='"+result["PATH"]+"'>"+result["NAME"]+"</a>";
+				$("#"+spanId).append(spanInnerHtml);
+			}else{
+				$("#"+spanId).append("request failure!!!");
+			}
+		},
+		error:function(errdata,request, settings){$("#"+spanId).append("request error!"+errdata);}
+	});
+}
+
+//获取有效身份令牌token值
+function getToken (siteId) {
+    var tokenVal='';
+    $.ajax({
+        url: embedRootPath+"/tokeninfo/token.do",
+        type: "POST",
+        async: false,
+        dataType: "json",
+        data: {siteId: siteId},
+        success: function (data,status) {
+            if(data.success){
+                tempToken=data.result.token;
+                tokenVal=data.result.token;
+            }else{
+                console.log(data.result.error);
+            }
+        }
+    })
+   return tokenVal;
+}
+
+

@@ -1,0 +1,455 @@
+//gentleCMS project JS ajax articleprevious articlenext
+jQuery.cmsdynamic={
+		addParam:function(name,value){
+			return name+"="+value+"&";
+		},
+   //根据栏目分组名称取指定时间之后发布的文章【最新文章按照时间顺序】
+   //time:例如查询最近一个月的最新文章传入30即可
+   //sitepuburl:前台模板 var sitepuburl='${cms.site.path}';就是网站的英文名称
+   getTheNewArticlesByGroupName:function(time,groupname,siteid,sitepuburl,successDiv,successTextarea){
+	   $.ajax({
+		   url:embedRootPath+"/f_articlesearch/getTheNewArticlesByChannels.do",
+		   type:"post",
+		   data:{sitepuburl:sitepuburl,groupname:groupname,siteid:siteid,time:time},
+		   dataType:"json",
+		   success:function(data){
+		     if(data.success){
+			   if(data.result.length>0){
+			               $("#"+successDiv).setTemplateElement(successTextarea,null,{filter_data:false});
+			               $("#"+successDiv).processTemplate(data.result);   
+			   }else{
+			    $("#"+successDiv).html("没有查询到数据！");
+			   }
+		   }else{
+		     $("#"+successDiv).html(data.result.message);
+		   }
+		   },
+		   error:function(){
+		          $("#"+successDiv).html("操作失败！方法存在异常！");
+		   }
+		     });
+   },
+   //文章点击量排行：根据站点查询指定数量【无分页，要分页前台json手动分页】ok
+   getArticlePaiHangBySiteid:function(num,siteid,sitepuburl,successDiv,successTextarea){
+	   $.ajax({
+		   url:embedRootPath+"/f_articlesearch/getArticleClickPaiHang.do",
+		   type:"post",
+		   data:{num:num,sitepuburl:sitepuburl,siteid:siteid},
+		   dataType:"json",
+		   success:function(data){
+		     if(data.success){
+		               $("#"+successDiv).setTemplateElement(successTextarea,null,{filter_data:false});
+		               $("#"+successDiv).processTemplate(data.result);   
+		   }else{
+		     $("#"+successDiv).html(data.result.message);
+		   }
+		   },
+		   error:function(){
+		     $("#"+successDiv).html("操作失败！方法存在异常！");
+		   }
+		     });
+   },
+   //栏目点击排行：根据站点查询指定数量ok
+   getChannelPaiHangBySiteid:function(num,siteid,sitepuburl,successDiv,successTextarea){
+	   $.ajax({
+		   url:embedRootPath+"/f_articlesearch/getChannelClickPaiHang.do",
+		   type:"post",
+		   data:{num:num,sitepuburl:sitepuburl,siteid:siteid},
+		   dataType:"json",
+		   success:function(data){
+		     if(data.success){
+		               $("#"+successDiv).setTemplateElement(successTextarea,null,{filter_data:false});
+		               $("#"+successDiv).processTemplate(data.result);   
+		   }else{
+		     $("#"+successDiv).html(data.result.message);
+		   }
+		   },
+		   error:function(){
+		    $("#"+successDiv).html("操作失败！方法存在异常！");
+		   }
+		     });
+   },
+   //文章点击量排行：根据站点查询指定数量【无分页，要分页前台json手动分页】ok
+   getArticlePaiHangByChannelid:function(num,siteid,channelid,sitepuburl,successDiv,successTextarea){
+	   $.ajax({
+		   url:embedRootPath+"/f_articlesearch/getArticleClickPaiHangByChannelid.do",
+		   type:"post",
+		   data:{num:num,sitepuburl:sitepuburl,siteid:siteid,channelid:channelid},
+		   dataType:"json",
+		   success:function(data){
+		     if(data.success){
+		               $("#"+successDiv).setTemplateElement(successTextarea,null,{filter_data:false});
+		               $("#"+successDiv).processTemplate(data.result);   
+		   }else{
+		     $("#"+successDiv).html(data.result.message);
+		   }
+		   },
+		   error:function(){
+		     $("#"+successDiv).html("操作失败！方法存在异常！");
+		   }
+		     });
+   },
+   //【站点方法如下：】
+   //根据siteid和name检索
+   getSearchArticleListBySite:function(pageIndex,pageSize,name,siteid,sitepuburl,needloginflag,successDiv,successTextarea){
+	   this.getSearchArticleList('','',pageIndex,pageSize,name,siteid,'',sitePubUrl,needloginflag,successDiv,successTextarea);
+   },
+   //根据siteid和name检索指定数量的信息【不分页】
+   getSearchArticleListBySiteNoPage:function(number,name,siteid,sitepuburl,needloginflag,successDiv,successTextarea){
+	   
+   },
+   //根据siteid和name和time
+   getSearchArticleListBySiteWithTime:function(time,pageIndex,pageSize,name,siteid,sitepuburl,needloginflag,successDiv,successTextarea){
+	   this.getSearchArticleList('',time,pageIndex,pageSize,name,siteid,'',sitePubUrl,needloginflag,successDiv,successTextarea);
+   },
+   //根据文章name来查询文章【可以限制必须登录才能看到的栏目文章】【这个方法不传入name可以作为查询站点或者栏目的最新文章信息，带有分页但可以传入number指定条数】ok
+   getSearchArticleList:function(number,time,pageIndex,pageSize,name,siteid,channelid,sitePubUrl,needloginflag,successDiv,successTextarea){
+	   $.ajax({
+		  url:embedRootPath+"/f_articlesearch/getSearchArticleList.do",
+		  type:"post",
+		  data:{number:number,time:time,pageIndex:pageIndex,pageSize:pageSize,name:name,siteid:siteid,channelid:channelid,sitePubUrl:sitePubUrl,needloginflag:needloginflag},
+		  dataType:"json",
+		  success:function(data){
+			    if(data.success){
+			    	            var distance=5;
+			                    var startNum;
+			                    var endNum;
+			                    var endSupply=0;
+			                    var curPageNo=data.result.curpage;
+			                    curPageNo=parseInt(curPageNo);
+			                    var totalPageCount=data.result.pagecount;
+			                    totalPageCount=parseInt(totalPageCount);
+			                    if (curPageNo-distance<1)
+			                    {
+			                        startNum=1;
+			                    }else
+			                    {
+			                        startNum=curPageNo-distance;
+			                    }
+			                    if (curPageNo+distance>totalPageCount)
+			                    {
+			                        endNum=totalPageCount;
+			                        endSupply=curPageNo+distance-totalPageCount;
+			                    }else
+			                    {
+			                        endNum=curPageNo+distance;
+			                    }
+			  
+			                    if (startNum==1&&totalPageCount>distance*2)
+			                    {
+			                            endNum=distance*2;
+			                    }
+			                    if (endSupply>0)
+			                    {
+			                            startNum=startNum-endSupply;
+			                            if (startNum<1)
+			                            startNum=1;
+			                    }
+			                    data.result.startNum=startNum;
+			                    data.result.endNum=endNum;
+			  
+			  
+			             if(data.result.articleList.length>0){
+			              $("#"+successDiv).setTemplateElement(successTextarea,null,{filter_data:false});
+			              $("#"+successDiv).processTemplate(data.result);   
+			              //$("#pagec").val(data.result.pagecount);
+			             }else{
+			                 $("#"+successDiv).html("没有查询到符合条件的文章！");
+			             }
+			  }else{
+				  $("#"+successDiv).html(data.result.message);
+			  }
+		  },
+		  error:function(){
+			  $("#"+successDiv).html("操作失败！方法存在异常！");
+		  }
+		    });
+	  },
+	  //根据站点id获取此站点下指定文章数量的最新文章【不能分页】ok
+	  getSomeArticlesBySiteid:function(num,siteid,sitepuburl,successDiv,successTextarea){
+		  $.ajax({
+			  url:embedRootPath+"/f_articlesearch/getSomeArticlesBySiteid.do",
+			  type:"post",
+			  data:{num:num,siteid:siteid,sitepuburl:sitepuburl},
+			  dataType:"json",
+			  success:function(data){
+			    if(data.success){
+			              $("#"+successDiv).setTemplateElement(successTextarea,null,{filter_data:false});
+			              $("#"+successDiv).processTemplate(data.result);   
+			    
+			  }else{
+			    $("#"+successDiv).html(data.result.message);
+			  }
+			  },
+			  error:function(){
+				  $("#"+successDiv).html("操作失败！方法存在异常！");
+			  }
+			    });
+	  },
+	  //根据父站点siteid来获取每个子站指定文章数量的最新文章【不能分页】OK
+	  getSomeArticlesBySites:function(num,siteid,successDiv,successTextarea){
+		  $.ajax({
+				  url:embedRootPath+"/f_articlesearch/getSomeArticlesBySites.do",
+				  type:"post",
+				  data:{num:num,siteid:siteid},
+				  dataType:"json",
+				  success:function(data){
+				    if(data.success){
+				              $("#"+successDiv).setTemplateElement(successTextarea,null,{filter_data:false});
+				              $("#"+successDiv).processTemplate(data.result.articleList);   
+				  }else{
+				    $("#"+successDiv).html(data.result.message);
+				  }
+				  },
+				  error:function(){
+					  $("#"+successDiv).html("操作失败！方法存在异常！");
+				  }
+			});
+	  },
+	  //根据栏目id来获取指定数量的最新文章ok
+	  getSomeArticlesByChannelid:function(num,channelid,sitepuburl,successDiv,successTextarea){
+		  $.ajax({
+				  url:embedRootPath+"/f_articlesearch/getSomeArticlesByChannelid.do",
+				  type:"post",
+				  data:{num:num,channelid:channelid,sitepuburl:sitepuburl},
+				  dataType:"json",
+				  success:function(data){
+				    if(data.success){
+				              $("#"+successDiv).setTemplateElement(successTextarea,null,{filter_data:false});
+				              $("#"+successDiv).processTemplate(data.result);   
+				    
+				  }else{
+				    $("#"+successDiv).html(data.result.message);
+				  }
+				  },
+				  error:function(){
+					  $("#"+successDiv).html("操作失败！方法存在异常！");
+				  }
+			});
+	  },
+	  //根据站点id来获取指定数量的最新文章信息【包含分页】ok
+	  getTheNewArticlesBySite:function(number,pageIndex,pageSize,siteid,sitePubUrl,successDiv,successTextarea){
+		  $.ajax({
+			  url:embedRootPath+"/f_articlesearch/getTheNewArticlesBySite.do",
+			  type:"post",
+			  data:{number:number,pageIndex:pageIndex,pageSize:pageSize,siteid:siteid,sitePubUrl:sitePubUrl},
+			  dataType:"json",
+			  success:function(data){
+				    if(data.success){
+				    	            var distance=5;
+				                    var startNum;
+				                    var endNum;
+				                    var endSupply=0;
+				                    var curPageNo=data.result.curpage;
+				                    curPageNo=parseInt(curPageNo);
+				                    var totalPageCount=data.result.pagecount;
+				                    totalPageCount=parseInt(totalPageCount);
+				                    if (curPageNo-distance<1)
+				                    {
+				                        startNum=1;
+				                    }else
+				                    {
+				                        startNum=curPageNo-distance;
+				                    }
+				                    if (curPageNo+distance>totalPageCount)
+				                    {
+				                        endNum=totalPageCount;
+				                        endSupply=curPageNo+distance-totalPageCount;
+				                    }else
+				                    {
+				                        endNum=curPageNo+distance;
+				                    }
+				  
+				                    if (startNum==1&&totalPageCount>distance*2)
+				                    {
+				                            endNum=distance*2;
+				                    }
+				                    if (endSupply>0)
+				                    {
+				                            startNum=startNum-endSupply;
+				                            if (startNum<1)
+				                            startNum=1;
+				                    }
+				                    data.result.startNum=startNum;
+				                    data.result.endNum=endNum;
+				  
+				  
+				             if(data.result.articleList.length>0){
+				              $("#"+successDiv).setTemplateElement(successTextarea,null,{filter_data:false});
+				              $("#"+successDiv).processTemplate(data.result);   
+				              //$("#pagec").val(data.result.pagecount);
+				             }else{
+				                 $("#"+successDiv).html("没有查询到符合条件的文章！");
+				             }
+				  }else{
+					  $("#"+successDiv).html(data.result.message);
+				  }
+			  },
+			  error:function(){
+				  $("#"+successDiv).html("操作失败！方法存在异常！");
+			  }
+			    });
+	  },
+	//根据栏目id来获取指定数量的最新文章信息【包含分页】ok
+	  getTheNewArticlesByChannel:function(number,pageIndex,pageSize,channelid,sitePubUrl,successDiv,successTextarea){
+		  $.ajax({
+			  url:embedRootPath+"/f_articlesearch/getTheNewArticlesByChannel.do",
+			  type:"post",
+			  data:{number:number,pageIndex:pageIndex,pageSize:pageSize,channelid:channelid,sitePubUrl:sitePubUrl},
+			  dataType:"json",
+			  success:function(data){
+				    if(data.success){
+				    	            var distance=5;
+				                    var startNum;
+				                    var endNum;
+				                    var endSupply=0;
+				                    var curPageNo=data.result.curpage;
+				                    curPageNo=parseInt(curPageNo);
+				                    var totalPageCount=data.result.pagecount;
+				                    totalPageCount=parseInt(totalPageCount);
+				                    if (curPageNo-distance<1)
+				                    {
+				                        startNum=1;
+				                        
+				                    }else
+				                    {
+				                        startNum=curPageNo-distance;
+				                    }
+				                    if (curPageNo+distance>totalPageCount)
+				                    {
+				                        endNum=totalPageCount;
+				                        endSupply=curPageNo+distance-totalPageCount;
+				                    }else
+				                    {
+				                        endNum=curPageNo+distance;
+				                    }
+				  
+				                    if (startNum==1&&totalPageCount>distance*2)
+				                    {
+				                            endNum=distance*2;
+				                    }
+				                    if (endSupply>0)
+				                    {
+				                            startNum=startNum-endSupply;
+				                            if (startNum<1)
+				                            startNum=1;
+				                    }
+				                    data.result.startNum=startNum;
+				                    data.result.endNum=endNum;
+				  
+				  
+				             if(data.result.articleList.length>0){
+				              $("#"+successDiv).setTemplateElement(successTextarea,null,{filter_data:false});
+				              $("#"+successDiv).processTemplate(data.result);   
+				              //$("#pagec").val(data.result.pagecount);
+				             }else{
+				                 $("#"+successDiv).html("没有查询到符合条件的文章！");
+				             }
+				  }else{
+					  $("#"+successDiv).html(data.result.message);
+				  }
+			  },
+			  error:function(){
+				  $("#"+successDiv).html("操作失败！方法存在异常！");
+			  }
+			    });
+	  },
+	  //=====================================================下面的没有测试====================================================================
+		//文章前一篇
+		getArticlePrevious:function(channelid,articleid,templateid,ispreview){
+		
+		  $.ajax({
+	          url:exchangePath+"/dynamicarticle/getPreviousArticleJsp.shtml?channelid="+channelid+"&articleid="+articleid+"&ispreview="+ispreview,         
+	          cache:false,
+	          type:"post",
+	          dataType:"html",
+	          success:function(data) {   
+			  		$("#"+templateid).html(data);
+	         },
+	          error:function(errdata,request, settings){
+	        	 alert(errdata);
+	          }
+	      });
+	       },
+	    //文章下一篇   
+		getArticleNext:function(channelid,articleid,templateid,ispreview){
+		 $.ajax({
+	         url:exchangePath+"/dynamicarticle/getNextArticleJsp.shtml?channelid="+channelid+"&articleid="+articleid+"&ispreview="+ispreview,          
+	         cache:false,
+	         type:"post",
+	         dataType:"html",
+	         success:function(data) {    
+			 	$("#"+templateid).html(data);
+	        },
+	         error:function(errdata,request, settings){
+	        	alert(errdata);
+	         }
+	     });
+	   },
+	  //根据组织ID编号获取某月或所有文章数量
+	  getArticleCountByOrganiseId:function(successDiv, successTextarea, orgId,
+				monthcount, num, orgIdIgnore,yearMonth) {
+		$.ajax({
+			url:"../articlecount/articleCount.shtml",
+			cache:false,
+			type:"post",
+			data: {
+				"orgId":orgId,
+				"monthcount":monthcount,
+				"num":num,
+				"orgIdIgnore":orgIdIgnore,
+				"yearMonth":yearMonth
+			},
+			dataType:"json",
+			success:function(data) {
+				$("#" + successDiv).setTemplateElement(successTextarea)
+						.processTemplate(data);
+			},
+			error:function() {
+			}
+		});
+	  },
+	  //根据组织ID编号获取某月或所有文章数量的柱状图
+	  getPicArticleCountByOrganiseId:function(successDiv, successTextarea, orgId,
+				monthcount, title, orgIdIgnore, yearMonth, num) {
+        $.ajax({
+            url:"../articlecount/getFusionCharts.shtml",         
+            cache:false,
+            type:"post",
+            data:{"orgId":orgId, "monthcount":monthcount, "title":title, "orgIdIgnore":orgIdIgnore, "yearMonth":yearMonth, "num":num},
+            dataType:"json",
+            success:function(data) {
+                  $("#"+successDiv)
+                      .setTemplateElement(successTextarea)
+                    .processTemplate(data);
+           },
+            error:function(){
+                  
+            }
+          });
+	  },
+	  getTheNewArticlesByChannelGroups:function(groupname,siteid,classify,successDiv,successTextarea){
+		   $.ajax({
+			   url:embedRootPath+"/f_articlesearch/getTheNewArticlesByChannelGroups.do",
+			   type:"post",
+			   data:{groupname:groupname,siteid:siteid,classify:classify},
+			   dataType:"json",
+			   success:function(data){
+			     if(data.success){
+				   if(data.result.length>0){
+				               $("#"+successDiv).setTemplateElement(successTextarea,null,{filter_data:false});
+				               $("#"+successDiv).processTemplate(data.result);   
+				   }else{
+				    $("#"+successDiv).html("没有查询到数据！");
+				   }
+			   }else{
+			     $("#"+successDiv).html(data.result.message);
+			   }
+			   },
+			   error:function(){
+			          $("#"+successDiv).html("操作失败！方法存在异常！");
+			   }
+			     });
+	   }
+}
+   
